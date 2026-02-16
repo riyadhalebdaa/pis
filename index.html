@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>School Screen</title>
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:#000;
+  font-family:Arial, sans-serif;
+}
+
+/* ===== Slider ===== */
+.slider{
+  position:absolute;
+  width:100%;
+  height:100%;
+}
+
+.slide{
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity 1.5s ease-in-out;
+  transform:scale(1);
+}
+
+.slide.active{
+  opacity:1;
+  animation:zoomEffect 5s ease-in-out forwards;
+}
+
+@keyframes zoomEffect{
+  from{ transform:scale(1); }
+  to{ transform:scale(1.08); }
+}
+
+/* ===== Logo ===== */
+.logo-box{
+  position:absolute;
+  top:20px;
+  left:20px;
+  background:#fff;
+  padding:12px 20px;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.25);
+}
+
+.logo-box img{
+  height:70px;
+  display:block;
+}
+
+/* ===== Clock ===== */
+.clock{
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:150px;
+  height:150px;
+  border:6px solid #FFD700;
+  border-radius:50%;
+  background:rgba(0,0,0,0.3);
+}
+
+.hand{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform-origin:0% 50%;
+}
+
+#hour{ width:30%; height:5px; background:#FFD700; }
+#minute{ width:45%; height:3px; background:#fff; }
+#second{ width:50%; height:1px; background:red; }
+
+</style>
+</head>
+
+<body>
+
+<div class="slider" id="slider"></div>
+
+<div class="logo-box">
+  <img src="logo.png">
+</div>
+
+<div class="clock">
+  <div class="hand" id="hour"></div>
+  <div class="hand" id="minute"></div>
+  <div class="hand" id="second"></div>
+</div>
+
+<script>
+
+/* ================= LOAD IMAGES FROM JSON ================= */
+
+async function loadImages(){
+  const response = await fetch("preimg/images.json");
+  const data = await response.json();
+  return data.images;
+}
+
+async function initSlider(){
+  const imageList = await loadImages();
+  const slider = document.getElementById("slider");
+
+  imageList.forEach((name,i)=>{
+    const img = document.createElement("img");
+    img.src = "preimg/" + name;
+    img.className = "slide";
+    if(i===0) img.classList.add("active");
+    slider.appendChild(img);
+  });
+
+  startSlider();
+}
+
+let currentSlide=0;
+function startSlider(){
+  const slides=document.querySelectorAll(".slide");
+
+  setInterval(()=>{
+    slides[currentSlide].classList.remove("active");
+    currentSlide=(currentSlide+1)%slides.length;
+    slides[currentSlide].classList.add("active");
+  },5000);
+}
+
+initSlider();
+
+/* ================= CLOCK ================= */
+
+function getKSA(){
+  const now=new Date();
+  const utc=now.getTime()+(now.getTimezoneOffset()*60000);
+  return new Date(utc+(3*60*60*1000));
+}
+
+function updateClock(){
+  let now=getKSA();
+  let h=now.getHours()%12;
+  let m=now.getMinutes();
+  let s=now.getSeconds();
+
+  hour.style.transform=`rotate(${(h*30)+(m/2)}deg)`;
+  minute.style.transform=`rotate(${m*6}deg)`;
+  second.style.transform=`rotate(${s*6}deg)`;
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+</script>
+
+</body>
+</html>
