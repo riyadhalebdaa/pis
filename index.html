@@ -264,34 +264,18 @@ function toMin(t){
 }
 
 /* SCHEDULE */
-const primary=[
- {name:"الاصطفاف الصباحي",start:"06:15",end:"06:30"},
- {name:"الحصة الأولى",start:"06:30",end:"07:15"},
- {name:"الحصة الثانية",start:"07:15",end:"08:00"},
- {name:"الفسحة الأولى",start:"08:00",end:"08:20"},
- {name:"الحصة الثالثة",start:"08:20",end:"08:45"},
- {name:"الحصة الرابعة",start:"09:05",end:"09:45"},
- {name:"الفسحة الثانية",start:"09:45",end:"10:05"},
- {name:"الحصة الخامسة",start:"10:05",end:"10:45"},
- {name:"الحصة السادسة",start:"10:45",end:"11:20"},
- {name:"الانصراف",start:"11:20",end:"11:50"}
-];
-
-const upper=[
- {name:"الاصطفاف الصباحي",start:"06:15",end:"06:30"},
- {name:"الحصة الأولى",start:"06:30",end:"07:15"},
- {name:"الحصة الثانية",start:"07:15",end:"08:00"},
- {name:"الحصة الثالثة",start:"08:00",end:"08:45"},
- {name:"الفسحة الأولى",start:"08:45",end:"09:05"},
- {name:"الحصة الرابعة",start:"09:05",end:"09:45"},
- {name:"الحصة الخامسة",start:"09:45",end:"10:25"},
- {name:"الفسحة الثانية",start:"10:25",end:"10:45"},
- {name:"الحصة السادسة",start:"10:45",end:"11:25"},
- {name:"الانصراف",start:"11:25",end:"11:55"}
+const schedule=[
+ {name:"الحصة الأولى",start:"09:00",end:"09:35"},
+ {name:"الحصة الثانية",start:"09:35",end:"10:10"},
+ {name:"الحصة الثالثة",start:"10:10",end:"10:45"},
+ {name:"الحصة الرابعة",start:"10:45",end:"11:20"},
+ {name:"الحصة الخامسة",start:"11:20",end:"11:55"},
+ {name:"الحصة السادسة",start:"11:55",end:"12:30"},
+ {name:"أداء صلاة الظهر",start:"12:30",end:"12:45"}
 ];
 
 let lastEvent=localStorage.getItem("lastEvent")||"";
-let prevPrimary="",prevUpper="";
+let prevEvent=null;
 
 function getCurrent(arr,current){
   return arr.find(e=>current>=toMin(e.start)&&current<toMin(e.end));
@@ -301,48 +285,39 @@ function checkSchedule(){
   const now=new Date();
   const current=now.getHours()*60+now.getMinutes();
 
-  const p=getCurrent(primary,current);
-  const u=getCurrent(upper,current);
+  const currentEvent=getCurrent(schedule,current);
 
   const box=document.getElementById("statusBox");
 
-  if(p||u){
+  if(currentEvent){
     box.style.display="block";
-    box.innerHTML=
-      (p?`🟡 الصفوف الأولية: الآن ${p.name}<br>`:"")+
-      (u?`🟠 الصفوف العليا: الآن ${u.name}`:"");
+    box.innerHTML=`🟢 الآن ${currentEvent.name}`;
   }else{
     box.style.display="none";
   }
 
-  const combined=(p?p.name:"")+"|"+(u?u.name:"");
+  const currentName=currentEvent ? currentEvent.name : "";
 
-  if(combined!==lastEvent && (p||u)){
-    showTransition(prevPrimary,p,prevUpper,u);
-    localStorage.setItem("lastEvent",combined);
-    lastEvent=combined;
+  if(currentName!==lastEvent && currentEvent){
+    showTransition(prevEvent,currentEvent);
+    localStorage.setItem("lastEvent",currentName);
+    lastEvent=currentName;
   }
 
-  prevPrimary = p || null;
-  prevUpper = u || null;
+  prevEvent=currentEvent || null;
 }
 
-function showTransition(oldP,newP,oldU,newU){
+
+function showTransition(oldEvent,newEvent){
 
   const overlay=document.getElementById("overlay");
   const bell=document.getElementById("bell");
 
-  let message="";
+  if(!oldEvent || oldEvent.name===newEvent.name) return;
 
-  if(oldP && newP && oldP.name !== newP.name){
-    message += `🟡 انتهت ${oldP.name}<br>وتبدأ الآن ${newP.name}<br><br>`;
-  }
-
-  if(oldU && newU && oldU.name !== newU.name){
-    message += `🟠 انتهت ${oldU.name}<br>وتبدأ الآن ${newU.name}`;
-  }
-
-  if(message.trim()==="") return;
+  const message=
+    `🟢 انتهت ${oldEvent.name}<br>
+     وتبدأ الآن ${newEvent.name}`;
 
   overlay.innerHTML=`<div class="overlay-content">${message}</div>`;
 
@@ -361,6 +336,7 @@ function showTransition(oldP,newP,oldU,newU){
 
   },10000);
 }
+
 
 setInterval(checkSchedule,1000);
 checkSchedule();
