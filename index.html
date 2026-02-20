@@ -59,12 +59,25 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
   z-index:10;
 }
 
+.clock-logo{
+  position:absolute;
+  width:50px;              /* حجم اللوجو */
+  opacity:1;            /* الشفافية */
+  z-index:2;               /* بين الخلفية والعقارب */
+  top:30%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;     /* ما يأثرش على أي حاجة */
+}
+
+
 /* العقارب */
 .hand{
   position:absolute;
   bottom:50%;
   transform-origin:bottom;
   border-radius:10px;
+  z-index:5;   /* أعلى من اللوجو */
 }
 
 .hour{
@@ -91,7 +104,7 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
   color:#111;
   transform:translate(-50%,-50%);
   font-family:"Arial", sans-serif;
-  z-index:5;
+  z-index:6;
 }
 
 .number.bold{
@@ -185,6 +198,8 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
 <div class="slider" id="slider"></div>
 
 <div class="clock">
+  <img src="logo_without_texts.png" class="clock-logo">
+
   <div class="hand hour"></div>
   <div class="hand minute"></div>
   <div class="hand second"></div>
@@ -194,7 +209,7 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
 <div class="status" id="statusBox"></div>
 <div class="overlay" id="overlay"></div>
 
-<audio id="bell" src="bell.mp3"></audio>
+<audio id="bell"></audio>
 
 <script>
 
@@ -265,16 +280,15 @@ function toMin(t){
 
 /* SCHEDULE */
 const schedule=[
- {name:"الحصة الأولى",start:"09:00",end:"09:35"},
- {name:"الحصة الثانية",start:"09:35",end:"10:10"},
- {name:"الحصة الثالثة",start:"10:10",end:"10:45"},
- {name:"الحصة الرابعة",start:"10:45",end:"11:20"},
- {name:"الحصة الخامسة",start:"11:20",end:"11:55"},
- {name:"الحصة السادسة",start:"11:55",end:"12:30"},
- {name:"أداء صلاة الظهر",start:"12:30",end:"12:45"}
+ {name:"الحصة الأولى",start:"02:52",end:"02:53", sound:"00.mp3"},
+ {name:"الحصة الثانية",start:"02:53",end:"02:54", sound:"01.mp3"},
+ {name:"الحصة الثالثة",start:"10:10",end:"10:45", sound:"02.mp3"},
+ {name:"الحصة الرابعة",start:"10:45",end:"11:20", sound:"03.mp3"},
+ {name:"الحصة الخامسة",start:"11:20",end:"11:55", sound:"04.mp3"},
+ {name:"الحصة السادسة",start:"11:55",end:"02:37", sound:"05.mp3"},
+ {name:"أداء صلاة الظهر",start:"02:54",end:"02:55", sound:"06.mp3"}
 ];
 
-let lastEvent=localStorage.getItem("lastEvent")||"";
 let prevEvent=null;
 
 function getCurrent(arr,current){
@@ -298,10 +312,9 @@ function checkSchedule(){
 
   const currentName=currentEvent ? currentEvent.name : "";
 
-  if(currentName!==lastEvent && currentEvent){
+if(currentEvent && 
+   (!prevEvent || prevEvent.name !== currentEvent.name)){
     showTransition(prevEvent,currentEvent);
-    localStorage.setItem("lastEvent",currentName);
-    lastEvent=currentName;
   }
 
   prevEvent=currentEvent || null;
@@ -313,19 +326,38 @@ function showTransition(oldEvent,newEvent){
   const overlay=document.getElementById("overlay");
   const bell=document.getElementById("bell");
 
-  if(!oldEvent || oldEvent.name===newEvent.name) return;
+  if(!newEvent) return;
 
-  const message=
-    `🟢 انتهت ${oldEvent.name}<br>
-     وتبدأ الآن ${newEvent.name}`;
+  let message="";
+
+  /* 🔹 لو فيه حصة قبلها */
+  if(oldEvent && oldEvent.name !== newEvent.name){
+    message =
+      `🟢 انتهت ${oldEvent.name}<br>
+       وتبدأ الآن ${newEvent.name}`;
+  }
+  /* 🔹 لو دي أول حصة في اليوم */
+  else if(!oldEvent){
+    message =
+      `🟢 تبدأ الآن ${newEvent.name}`;
+  }
+  else{
+    return;
+  }
 
   overlay.innerHTML=`<div class="overlay-content">${message}</div>`;
 
   overlay.classList.remove("hide");
   overlay.classList.add("show");
 
-  bell.currentTime=0;
-  bell.play();
+  /* 🔔 تشغيل الصوت المحدد */
+if(newEvent.sound){
+  bell.src = `audio/${newEvent.sound}`;
+  bell.muted = false;
+  bell.currentTime = 0;
+
+  bell.play().catch(e => console.log("Audio blocked:", e));
+}
 
   setTimeout(()=>{
     overlay.classList.add("hide");
