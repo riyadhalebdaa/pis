@@ -210,6 +210,23 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
 <div class="overlay" id="overlay"></div>
 
 <audio id="bell"></audio>
+<script>
+const bell = document.getElementById("bell");
+
+/* 🔓 فك قفل الصوت أول ما المستخدم يلمس الشاشة */
+function unlockAudio(){
+  bell.play().then(()=>{
+    bell.pause();
+    bell.currentTime = 0;
+  }).catch(()=>{});
+
+  document.removeEventListener("click", unlockAudio);
+  document.removeEventListener("touchstart", unlockAudio);
+}
+
+document.addEventListener("click", unlockAudio);
+document.addEventListener("touchstart", unlockAudio);
+</script>
 
 <script>
 
@@ -280,13 +297,13 @@ function toMin(t){
 
 /* SCHEDULE */
 const schedule=[
- {name:"الحصة الأولى",start:"02:52",end:"02:53", sound:"00.mp3"},
- {name:"الحصة الثانية",start:"02:53",end:"02:54", sound:"01.mp3"},
+ {name:"الحصة الأولى",start:"03:00",end:"03:01", sound:"00.mp3"},
+ {name:"الحصة الثانية",start:"03:01",end:"03:02", sound:"01.mp3"},
  {name:"الحصة الثالثة",start:"10:10",end:"10:45", sound:"02.mp3"},
  {name:"الحصة الرابعة",start:"10:45",end:"11:20", sound:"03.mp3"},
  {name:"الحصة الخامسة",start:"11:20",end:"11:55", sound:"04.mp3"},
  {name:"الحصة السادسة",start:"11:55",end:"02:37", sound:"05.mp3"},
- {name:"أداء صلاة الظهر",start:"02:54",end:"02:55", sound:"06.mp3"}
+ {name:"أداء صلاة الظهر",start:"03:02",end:"03:03", sound:"06.mp3"}
 ];
 
 let prevEvent=null;
