@@ -175,7 +175,10 @@ let days=["الأحد","الاثنين","الثلاثاء","الأربعاء","�
 let hijri=new Intl.DateTimeFormat("ar-SA-u-ca-islamic",{day:"numeric",month:"long",year:"numeric"}).format(d);
 hijri=hijri.replace(/\s?هـ/,"").trim()+"هـ";
 let greg=new Intl.DateTimeFormat("ar-EG",{day:"numeric",month:"long",year:"numeric"}).format(d);
-dateBox.innerHTML=`${days[d.getDay()]} ${toArabicDigits(hijri)}<br>الموافق ${toArabicDigits(greg)}م`;
+dateBox.innerHTML = `
+<div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
+<div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
+`;
 }
 updateDate();setInterval(updateDate,60000);
 
