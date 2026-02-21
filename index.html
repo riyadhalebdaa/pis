@@ -175,6 +175,21 @@ transition:transform 0.6s ease, opacity 0.6s ease;
 .overlay.show{opacity:1;visibility:visible;}
 .overlay.show .overlay-content{transform:scale(1);opacity:1;}
 .overlay.hide .overlay-content{transform:scale(0.6);opacity:0;}
+
+.date-box{
+  position:absolute;
+  bottom:40px;
+  left:40px;
+  background:rgba(255,255,255,0.95);
+  padding:18px 30px;
+  border-radius:15px;
+  font-size:20px;
+  font-weight:bold;
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+  direction:rtl;
+  text-align:right;
+  line-height:1.8;
+}
 </style>
 </head>
 <body>
@@ -202,6 +217,7 @@ transition:transform 0.6s ease, opacity 0.6s ease;
 </div>
 
 <div class="status" id="statusBox"></div>
+<div class="date-box" id="dateBox"></div>
 <div class="overlay" id="overlay"></div>
 
 <script>
@@ -245,7 +261,59 @@ hour.style.transform=`rotate(${(h*30)+(m*0.5)}deg)`;
 minute.style.transform=`rotate(${m*6}deg)`;
 second.style.transform=`rotate(${s*6}deg)`;
 }
-setInterval(updateClock,1000);updateClock();
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* DATE (Hijri + Gregorian) */
+
+function toArabicDigits(str){
+  const map = {
+    "0":"٠","1":"١","2":"٢","3":"٣","4":"٤",
+    "5":"٥","6":"٦","7":"٧","8":"٨","9":"٩"
+  };
+  return str.replace(/[0-9]/g, d => map[d]);
+}
+
+function updateDate(){
+
+  const now = new Date();
+
+  // اليوم بالعربية
+  const days = [
+    "الأحد","الاثنين","الثلاثاء",
+    "الأربعاء","الخميس","الجمعة","السبت"
+  ];
+
+  const dayName = days[now.getDay()];
+
+  // التاريخ الميلادي
+  const gregorianFormatter = new Intl.DateTimeFormat("ar-EG",{
+    day:"numeric",
+    month:"long",
+    year:"numeric"
+  });
+
+  const gregorianDate = gregorianFormatter.format(now);
+
+  // التاريخ الهجري
+  const hijriFormatter = new Intl.DateTimeFormat("ar-SA-u-ca-islamic",{
+    day:"numeric",
+    month:"long",
+    year:"numeric"
+  });
+
+  const hijriDate = hijriFormatter.format(now);
+
+  document.getElementById("dateBox").innerHTML = `
+    ${dayName} ${toArabicDigits(hijriDate)}<br>
+    الموافق ${toArabicDigits(gregorianDate)}م
+  `;
+}
+
+updateDate();
+setInterval(updateDate, 60000);
+
 
 function toMin(t){const [h,m]=t.split(":").map(Number);return h*60+m;}
 
