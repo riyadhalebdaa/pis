@@ -260,33 +260,59 @@ const schedule=[
 ];
 
 /* PRELOAD AUDIO */
-const preloadedAudio={};
-let soundsLoaded=0;
-const totalSounds=schedule.length;
+const preloadedAudio = {};
+let totalLoadedBytes = 0;
+let totalBytes = 0;
+let loadedFiles = 0;
 
 function preloadSounds(){
-schedule.forEach(event=>{
-const audio=new Audio(`audio/${event.sound}`);
-audio.preload="auto";
-audio.addEventListener("canplaythrough",()=>{
-soundsLoaded++;
-const percent=Math.round((soundsLoaded/totalSounds)*100);
-document.getElementById("progressBar").style.width=percent+"%";
-document.getElementById("progressText").innerText=percent+"%";
-if(soundsLoaded===totalSounds){
-setTimeout(()=>{
-const loading=document.getElementById("loadingScreen");
-loading.style.opacity="0";
-setTimeout(()=>{
-loading.style.display="none";
-startSystem();
-},800);
-},500);
-}
-});
-audio.load();
-preloadedAudio[event.sound]=audio;
-});
+
+  schedule.forEach(event=>{
+
+    const audio = new Audio(`audio/${event.sound}`);
+    audio.preload = "auto";
+
+    audio.addEventListener("loadedmetadata",()=>{
+      if(audio.duration){
+        totalBytes += 1; 
+      }
+    });
+
+    audio.addEventListener("progress",()=>{
+      if(audio.buffered.length > 0){
+        const loaded = audio.buffered.end(0);
+        const percent = Math.min((loaded / audio.duration) * 100, 100);
+
+        // متوسط تقريبي لكل الملفات
+        const overall = Math.round(
+          ((loadedFiles + (percent/100)) / schedule.length) * 100
+        );
+
+        document.getElementById("progressBar").style.width = overall + "%";
+        document.getElementById("progressText").innerText = overall + "%";
+      }
+    });
+
+    audio.addEventListener("canplaythrough",()=>{
+      loadedFiles++;
+
+      if(loadedFiles === schedule.length){
+        setTimeout(()=>{
+          const loading=document.getElementById("loadingScreen");
+          loading.style.opacity="0";
+          setTimeout(()=>{
+            loading.style.display="none";
+            startSystem();
+          },800);
+        },500);
+      }
+    });
+
+    audio.load();
+    preloadedAudio[event.sound]=audio;
+
+  });
+
 }
 
 let lastEvent=localStorage.getItem("lastEvent")||"";
