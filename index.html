@@ -297,16 +297,18 @@ function toMin(t){
 
 /* SCHEDULE */
 const schedule=[
- {name:"الحصة الأولى",start:"03:33",end:"03:35", sound:"00.mp3"},
- {name:"الحصة الثانية",start:"03:35",end:"03:37", sound:"01.mp3"},
- {name:"الحصة الثالثة",start:"03:37",end:"03:39", sound:"02.mp3"},
- {name:"الحصة الرابعة",start:"03:39",end:"03:41", sound:"03.mp3"},
- {name:"الحصة الخامسة",start:"03:41",end:"03:43", sound:"04.mp3"},
- {name:"الحصة السادسة",start:"03:43",end:"03:45", sound:"05.mp3"},
- {name:"أداء صلاة الظهر",start:"03:45",end:"03:46", sound:"06.mp3"}
+ {name:"الحصة الأولى",start:"04:00",end:"04:02", sound:"00.MP3"},
+ {name:"الحصة الثانية",start:"04:02",end:"04:04", sound:"01.MP3"},
+ {name:"الحصة الثالثة",start:"04:06",end:"04:08", sound:"02.MP3"},
+ {name:"الحصة الرابعة",start:"04:10",end:"04:12", sound:"03.MP3"},
+ {name:"الحصة الخامسة",start:"04:14",end:"04:16", sound:"04.MP3 "},
+ {name:"الحصة السادسة",start:"04:18",end:"04:20", sound:"05.MP3 "},
+ {name:"أداء صلاة الظهر",start:"04:22",end:"04:24", sound:"06.MP3 "}
 ];
 
-let prevEvent=null;
+let lastEvent = localStorage.getItem("lastEvent") || "";
+let prevEvent = null;
+
 
 function getCurrent(arr,current){
   return arr.find(e=>current>=toMin(e.start)&&current<toMin(e.end));
@@ -327,12 +329,15 @@ function checkSchedule(){
     box.style.display="none";
   }
 
-  const currentName=currentEvent ? currentEvent.name : "";
 
-if(currentEvent && 
-   (!prevEvent || prevEvent.name !== currentEvent.name)){
+const currentName = currentEvent ? currentEvent.name : "";
+
+if(currentName !== lastEvent && currentEvent){
     showTransition(prevEvent,currentEvent);
-  }
+    localStorage.setItem("lastEvent", currentName);
+    lastEvent = currentName;
+}
+
 
   prevEvent=currentEvent || null;
 }
@@ -370,10 +375,9 @@ function showTransition(oldEvent,newEvent){
   /* 🔔 تشغيل الصوت المحدد */
 if(newEvent.sound){
   bell.src = `audio/${newEvent.sound}`;
-  bell.muted = false;
   bell.currentTime = 0;
 
-  bell.play().catch(e => console.log("Audio blocked:", e));
+  bell.play();
 }
 
   setTimeout(()=>{
