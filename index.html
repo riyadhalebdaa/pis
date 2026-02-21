@@ -210,23 +210,6 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
 <div class="overlay" id="overlay"></div>
 
 <audio id="bell"></audio>
-<script>
-const bell = document.getElementById("bell");
-
-/* 🔓 فك قفل الصوت أول ما المستخدم يلمس الشاشة */
-function unlockAudio(){
-  bell.play().then(()=>{
-    bell.pause();
-    bell.currentTime = 0;
-  }).catch(()=>{});
-
-  document.removeEventListener("click", unlockAudio);
-  document.removeEventListener("touchstart", unlockAudio);
-}
-
-document.addEventListener("click", unlockAudio);
-document.addEventListener("touchstart", unlockAudio);
-</script>
 
 <script>
 
@@ -297,13 +280,13 @@ function toMin(t){
 
 /* SCHEDULE */
 const schedule=[
- {name:"الحصة الأولى",start:"04:00",end:"04:02", sound:"00.MP3"},
- {name:"الحصة الثانية",start:"04:02",end:"04:04", sound:"01.MP3"},
- {name:"الحصة الثالثة",start:"04:06",end:"04:08", sound:"02.MP3"},
- {name:"الحصة الرابعة",start:"04:10",end:"04:12", sound:"03.MP3"},
- {name:"الحصة الخامسة",start:"04:14",end:"04:16", sound:"04.MP3 "},
- {name:"الحصة السادسة",start:"04:18",end:"04:20", sound:"05.MP3 "},
- {name:"أداء صلاة الظهر",start:"04:22",end:"04:24", sound:"06.MP3 "}
+ {name:"الحصة الأولى",start:"04:48",end:"04:50", sound:"00.MP3"},
+ {name:"الحصة الثانية",start:"04:50",end:"04:52", sound:"01.MP3"},
+ {name:"الحصة الثالثة",start:"04:52",end:"04:54", sound:"02.MP3"},
+ {name:"الحصة الرابعة",start:"04:54",end:"04:56", sound:"03.MP3"},
+ {name:"الحصة الخامسة",start:"04:56",end:"04:58", sound:"04.MP3"},
+ {name:"الحصة السادسة",start:"04:58",end:"05:00", sound:"05.MP3"},
+ {name:"أداء صلاة الظهر",start:"05:00",end:"05:02", sound:"06.MP3"}
 ];
 
 let lastEvent = localStorage.getItem("lastEvent") || "";
@@ -376,18 +359,17 @@ function showTransition(oldEvent,newEvent){
 if(newEvent.sound){
   bell.src = `audio/${newEvent.sound}`;
   bell.currentTime = 0;
-
   bell.play();
 }
 
+setTimeout(()=>{
+  overlay.classList.add("hide");
+
   setTimeout(()=>{
-    overlay.classList.add("hide");
+    overlay.classList.remove("show","hide");
+  },600);
 
-    setTimeout(()=>{
-      overlay.classList.remove("show","hide");
-    },600);
-
-  },10000);
+},12000);
 }
 
 
