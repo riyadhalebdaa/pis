@@ -235,24 +235,47 @@ prevEvent=currentEvent;
 setInterval(checkSchedule,1000);checkSchedule();
 
 /* SLIDER */
-const slider=document.getElementById("slider");
-let slides=[],i=1;
-for(;i<=10;i++){   /* عددي عدد صورك هنا */
-let img=document.createElement("img");
-img.src=`preimg/Slide${i}.JPG`;
-img.className="slide";
-slider.appendChild(img);
-slides.push(img);
+const slider = document.getElementById("slider");
+
+const totalImages = 300;
+let currentIndex = 1;
+
+let img1 = document.createElement("img");
+let img2 = document.createElement("img");
+
+img1.className = "slide active";
+img2.className = "slide";
+
+slider.appendChild(img1);
+slider.appendChild(img2);
+
+function getImagePath(index){
+  return `preimg/Slide${index}.JPG`;
 }
-if(slides.length){
-slides[0].classList.add("active");
-let c=0;
-setInterval(()=>{
-slides[c].classList.remove("active");
-c=(c+1)%slides.length;
-slides[c].classList.add("active");
-},5000);
+
+img1.src = getImagePath(currentIndex);
+
+function nextSlide(){
+
+  let nextIndex = currentIndex + 1;
+  if(nextIndex > totalImages) nextIndex = 1;
+
+  img2.src = getImagePath(nextIndex);
+
+  img2.onload = () => {
+
+    img2.classList.add("active");
+    img1.classList.remove("active");
+
+    // swap
+    [img1, img2] = [img2, img1];
+    currentIndex = nextIndex;
+
+  };
+
 }
+
+setInterval(nextSlide, 5000);
 
 /* VIDEO SCHEDULE + FADE */
 function checkVideo(){
