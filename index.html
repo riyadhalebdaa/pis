@@ -60,7 +60,7 @@ z-index:10;
 .logo-container img{height:70px;}
 
 /* SLIDER */
-.slider{position:fixed;width:100%;height:100%;z-index:-1;}
+.slider{position:fixed;width:100%;height:100%;z-index:-2;}
 .slide{
 position:absolute;width:100%;height:100%;
 object-fit:cover;opacity:0;
@@ -190,9 +190,24 @@ transition:transform 0.6s ease, opacity 0.6s ease;
   text-align:right;
   line-height:1.8;
 }
+
+#bgVideo{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;   /* أهم سطر */
+  z-index: -1;
+}
+
 </style>
 </head>
 <body>
+
+<video id="bgVideo" autoplay muted loop playsinline style="display:none;">
+  <source src="video/rc.mp4" type="video/mp4">
+</video>
 
 <div id="loadingScreen">
 <div>⏳ جاري تحميل النظام...</div>
@@ -303,7 +318,13 @@ function updateDate(){
     year:"numeric"
   });
 
-  const hijriDate = hijriFormatter.format(now);
+   let hijriDate = hijriFormatter.format(now);
+
+   // نشيل أي رمز سنة موجود مسبقًا (لو ظهر)
+     hijriDate = hijriDate.replace(/\s?هـ/, "").trim();
+
+   // نضيف هـ مباشرة بعد السنة بدون مسافة
+   hijriDate += "هـ";
 
   document.getElementById("dateBox").innerHTML = `
     ${dayName} ${toArabicDigits(hijriDate)}<br>
@@ -318,13 +339,13 @@ setInterval(updateDate, 60000);
 function toMin(t){const [h,m]=t.split(":").map(Number);return h*60+m;}
 
 const schedule=[
-{name:"الحصة الأولى",start:"04:48",end:"04:50",sound:"00.MP3"},
-{name:"الحصة الثانية",start:"04:50",end:"04:52",sound:"01.MP3"},
-{name:"الحصة الثالثة",start:"04:52",end:"04:54",sound:"02.MP3"},
-{name:"الحصة الرابعة",start:"04:54",end:"04:56",sound:"03.MP3"},
-{name:"الحصة الخامسة",start:"04:56",end:"04:58",sound:"04.MP3"},
-{name:"الحصة السادسة",start:"04:58",end:"05:00",sound:"05.MP3"},
-{name:"أداء صلاة الظهر",start:"05:00",end:"05:02",sound:"06.MP3"}
+{name:"الحصة الأولى",start:"09:00",end:"09:35",sound:"00.MP3"},
+{name:"الحصة الثانية",start:"09:35",end:"10:10",sound:"01.MP3"},
+{name:"الحصة الثالثة",start:"10:10",end:"10:45",sound:"02.MP3"},
+{name:"الحصة الرابعة",start:"10:45",end:"11:20",sound:"03.MP3"},
+{name:"الحصة الخامسة",start:"11:20",end:"11:55",sound:"04.MP3"},
+{name:"الحصة السادسة",start:"11:55",end:"12:30",sound:"05.MP3"},
+{name:"أداء صلاة الظهر",start:"12:30",end:"12:45",sound:"06.MP3"}
 ];
 
 /* PRELOAD AUDIO */
@@ -403,13 +424,20 @@ box.innerHTML=`🟢 الآن ${currentEvent.name}`;
 box.style.display="none";
 }
 
-const currentName=currentEvent?currentEvent.name:"";
-if(currentName!==lastEvent&&currentEvent){
-showTransition(prevEvent,currentEvent);
-localStorage.setItem("lastEvent",currentName);
-lastEvent=currentName;
-}
-prevEvent=currentEvent||null;
+const today = new Date().getDay(); 
+// الأحد=0 ... الجمعة=5 ... السبت=6
+
+const blockedDays = [5,6]; // الجمعة والسبت
+
+if(currentName !== lastEvent && currentEvent){
+
+  if(!blockedDays.includes(today)){
+    showTransition(prevEvent, currentEvent);
+  }
+
+  localStorage.setItem("lastEvent", currentName);
+  lastEvent = currentName;
+}prevEvent=currentEvent||null;
 }
 
 function showTransition(oldEvent,newEvent){
@@ -463,6 +491,36 @@ slides[currentSlide].classList.remove("active");
 currentSlide=(currentSlide+1)%slides.length;
 slides[currentSlide].classList.add("active");
 },5000);
+
+function checkVideoSchedule(){
+
+  const now = new Date();
+
+  const day = now.getDay(); 
+  // الأحد=0، الاثنين=1، الثلاثاء=2، الأربعاء=3، الخميس=4، الجمعة=5، السبت=6
+
+  const currentMinutes = now.getHours()*60 + now.getMinutes();
+
+  const start = 21*60 + 20;   // 9:20 PM
+  const end   = 24*60;        // 12:00 AM
+
+  const allowedDays = [0,1,2,3]; // الأحد - الاثنين - الثلاثاء - الأربعاء
+
+  const video = document.getElementById("bgVideo");
+
+  if(allowedDays.includes(day) && currentMinutes >= start && currentMinutes < end){
+    video.style.display = "block";
+    video.play();
+  }else{
+    video.pause();
+    video.style.display = "none";
+  }
+
+}
+
+// فحص كل 30 ثانية
+setInterval(checkVideoSchedule, 30000);
+checkVideoSchedule();
 
 </script>
 </body>
