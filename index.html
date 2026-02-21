@@ -66,6 +66,15 @@ display:flex;justify-content:center;align-items:center;
 z-index:5;
 }
 .center{position:absolute;width:16px;height:16px;background:#000;border-radius:50%;z-index:10;}
+.clock-logo{
+position:absolute;
+width:50px;
+z-index:2;
+top:30%;
+left:50%;
+transform:translate(-50%,-50%);
+pointer-events:none;
+}
 .hand{position:absolute;bottom:50%;transform-origin:bottom;border-radius:10px;z-index:5;}
 .hour{width:7px;height:65px;background:#111;}
 .minute{width:4px;height:95px;background:#333;}
@@ -124,6 +133,7 @@ z-index:999;
 <div class="slider" id="slider"></div>
 
 <div class="clock">
+<img src="logo_without_texts.png" class="clock-logo">
 <div class="hand hour"></div>
 <div class="hand minute"></div>
 <div class="hand second"></div>
