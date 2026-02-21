@@ -9,58 +9,35 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:Arial;background:#fff;overflow:hidden;}
 
-/* LOADING SCREEN */
+/* LOADING */
 #loadingScreen{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000;
-color:#fff;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-font-size:28px;
-z-index:2000;
-direction:rtl;
-transition:opacity 0.8s ease;
-opacity:1;
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:#000;color:#fff;display:flex;
+flex-direction:column;justify-content:center;align-items:center;
+font-size:28px;z-index:2000;direction:rtl;
+transition:opacity .8s ease;
 }
+#progressContainer{width:400px;height:20px;background:#333;margin-top:25px;border-radius:10px;overflow:hidden;}
+#progressBar{height:100%;width:0%;background:#00c853;transition:width .3s;}
+#progressText{margin-top:15px;font-size:22px;}
 
-#progressContainer{
-width:400px;
-height:20px;
-background:#333;
-margin-top:25px;
-border-radius:10px;
-overflow:hidden;
+/* VIDEO */
+#bgVideo{
+position:fixed;top:0;left:0;
+width:100vw;height:100vh;
+object-fit:cover;
+z-index:-1;
+opacity:0;
+transition:opacity 1.2s ease;
 }
-
-#progressBar{
-height:100%;
-width:0%;
-background:#00c853;
-transition:width 0.3s;
-}
-
-#progressText{
-margin-top:15px;
-font-size:22px;
-}
-
-/* LOGO */
-.logo-container{
-position:absolute;top:20px;right:30px;
-background:#fff;padding:15px 40px;
-border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,0.08);
-z-index:10;
-}
-.logo-container img{height:70px;}
 
 /* SLIDER */
-.slider{position:fixed;width:100%;height:100%;z-index:-2;}
+.slider{
+position:fixed;width:100%;height:100%;
+z-index:-2;
+opacity:1;
+transition:opacity 1.2s ease;
+}
 .slide{
 position:absolute;width:100%;height:100%;
 object-fit:cover;opacity:0;
@@ -68,163 +45,85 @@ transition:opacity 1.5s ease-in-out;
 }
 .slide.active{opacity:1;}
 
-/* CLOCK */
-.clock{
-position:absolute;
-top:40px;
-left:40px;
-width:240px;
-height:240px;
-border-radius:50%;
-background:rgba(255,255,255,0.50);
-backdrop-filter: blur(6px);
-border:6px solid rgba(0,0,0,0.75);
-box-shadow:
-0 0 0 6px rgba(255,255,255,0.6),
-0 15px 35px rgba(0,0,0,0.25);
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-.center{
-position:absolute;
-width:16px;
-height:16px;
-background:#000;
-border-radius:50%;
+/* LOGO */
+.logo-container{
+position:absolute;top:20px;right:30px;
+background:#fff;padding:15px 40px;
+border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,.08);
 z-index:10;
 }
+.logo-container img{height:70px;}
 
-.clock-logo{
-position:absolute;
-width:50px;
-z-index:2;
-top:30%;
-left:50%;
-transform:translate(-50%,-50%);
-pointer-events:none;
-}
-
-.hand{
-position:absolute;
-bottom:50%;
-transform-origin:bottom;
-border-radius:10px;
+/* CLOCK */
+.clock{
+position:absolute;top:40px;left:40px;
+width:240px;height:240px;border-radius:50%;
+background:rgba(255,255,255,.5);
+backdrop-filter:blur(6px);
+border:6px solid rgba(0,0,0,.75);
+box-shadow:0 0 0 6px rgba(255,255,255,.6),0 15px 35px rgba(0,0,0,.25);
+display:flex;justify-content:center;align-items:center;
 z-index:5;
 }
-
+.center{position:absolute;width:16px;height:16px;background:#000;border-radius:50%;z-index:10;}
+.hand{position:absolute;bottom:50%;transform-origin:bottom;border-radius:10px;z-index:5;}
 .hour{width:7px;height:65px;background:#111;}
 .minute{width:4px;height:95px;background:#333;}
 .second{width:2px;height:105px;background:#d40000;}
-
-.number{
-position:absolute;
-font-size:22px;
-font-weight:500;
-color:#111;
-transform:translate(-50%,-50%);
-z-index:6;
-}
-
-.number.bold{
-font-weight:800;
-font-size:29px;
-}
-
-.tick{
-position:absolute;
-width:3px;
-height:7px;
-background:#222;
-top:5px;
-left:49%;
-transform-origin:50% 110px;
-}
+.number{position:absolute;font-size:22px;font-weight:500;color:#111;transform:translate(-50%,-50%);z-index:6;}
+.number.bold{font-weight:800;font-size:29px;}
+.tick{position:absolute;width:3px;height:7px;background:#222;top:5px;left:49%;transform-origin:50% 110px;}
 .tick.small{height:3px;width:2px;background:#555;}
 
+/* STATUS */
 .status{
 position:absolute;bottom:40px;right:40px;
-background:rgba(255,255,255,0.95);
+background:rgba(255,255,255,.95);
 padding:18px 35px;border-radius:15px;
 font-size:22px;font-weight:bold;
-box-shadow:0 10px 25px rgba(0,0,0,0.15);
-display:none;line-height:1.8;direction:rtl;
-text-align:right;
+box-shadow:0 10px 25px rgba(0,0,0,.15);
+display:none;direction:rtl;z-index:5;
 }
 
+/* DATE */
+.date-box{
+position:absolute;bottom:40px;left:40px;
+background:rgba(255,255,255,.95);
+padding:18px 30px;border-radius:15px;
+font-size:20px;font-weight:bold;
+box-shadow:0 10px 25px rgba(0,0,0,.15);
+direction:rtl;z-index:5;
+}
+
+/* OVERLAY */
 .overlay{
-position:fixed;
-top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.65);
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,.65);
 display:flex;justify-content:center;align-items:center;
 color:#fff;font-size:46px;font-weight:bold;
-padding:40px;
 opacity:0;visibility:hidden;
-transition:opacity 0.6s ease;
+transition:opacity .6s ease;
 z-index:999;
 }
-
-.overlay-content{
-direction:rtl;text-align:right;
-transform:scale(0.8);
-opacity:0;
-transition:transform 0.6s ease, opacity 0.6s ease;
-}
-
 .overlay.show{opacity:1;visibility:visible;}
-.overlay.show .overlay-content{transform:scale(1);opacity:1;}
-.overlay.hide .overlay-content{transform:scale(0.6);opacity:0;}
-
-.date-box{
-  position:absolute;
-  bottom:40px;
-  left:40px;
-  background:rgba(255,255,255,0.95);
-  padding:18px 30px;
-  border-radius:15px;
-  font-size:20px;
-  font-weight:bold;
-  box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  direction:rtl;
-  text-align:right;
-  line-height:1.8;
-}
-
-#bgVideo{
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;   /* أهم سطر */
-  z-index: -1;
-}
-
 </style>
 </head>
 <body>
 
-<video id="bgVideo" autoplay muted loop playsinline style="display:none;">
-  <source src="video/rc.mp4" type="video/mp4">
+<video id="bgVideo" autoplay muted loop playsinline>
+<source src="video/rc.mp4" type="video/mp4">
 </video>
 
 <div id="loadingScreen">
 <div>⏳ جاري تحميل النظام...</div>
-<div id="progressContainer">
-<div id="progressBar"></div>
-</div>
-<div id="progressText">0%</div>
+<div id="progressContainer"><div id="progressBar"></div></div>
+<div id="progressText">100%</div>
 </div>
 
-<div class="logo-container">
-<img src="logo.png">
-</div>
-
+<div class="logo-container"><img src="logo.png"></div>
 <div class="slider" id="slider"></div>
 
 <div class="clock">
-<img src="logo_without_texts.png" class="clock-logo">
 <div class="hand hour"></div>
 <div class="hand minute"></div>
 <div class="hand second"></div>
@@ -242,285 +141,128 @@ const hour=document.querySelector(".hour");
 const minute=document.querySelector(".minute");
 const second=document.querySelector(".second");
 const clock=document.querySelector(".clock");
-
-const arabicNumbers=["١","٢","٣","٤","٥","٦","٧","٨","٩","١٠","١١","١٢"];
-
+const nums=["١","٢","٣","٤","٥","٦","٧","٨","٩","١٠","١١","١٢"];
 for(let i=1;i<=12;i++){
-const num=document.createElement("div");
-num.classList.add("number");
-if([3,6,9,12].includes(i)){num.classList.add("bold");}
-num.textContent=arabicNumbers[i-1];
-const angle=(i*30)*(Math.PI/180);
-const radius=87;
-const x=113 + radius*Math.sin(angle);
-const y=116 - radius*Math.cos(angle);
-num.style.left=x+"px";
-num.style.top=y+"px";
-clock.appendChild(num);
+let n=document.createElement("div");
+n.className="number";
+if([3,6,9,12].includes(i))n.classList.add("bold");
+n.textContent=nums[i-1];
+let angle=i*30*Math.PI/180;
+let r=87;
+n.style.left=113+r*Math.sin(angle)+"px";
+n.style.top=116-r*Math.cos(angle)+"px";
+clock.appendChild(n);
 }
-
 for(let i=0;i<60;i++){
-const tick=document.createElement("div");
-tick.classList.add("tick");
-if(i%5!==0){tick.classList.add("small");}
-tick.style.transform=`rotate(${i*6}deg)`;
-clock.appendChild(tick);
+let t=document.createElement("div");
+t.className="tick"+(i%5?" small":"");
+t.style.transform=`rotate(${i*6}deg)`;
+clock.appendChild(t);
 }
-
 function updateClock(){
-const now=new Date();
-const h=now.getHours()%12;
-const m=now.getMinutes();
-const s=now.getSeconds();
-hour.style.transform=`rotate(${(h*30)+(m*0.5)}deg)`;
-minute.style.transform=`rotate(${m*6}deg)`;
-second.style.transform=`rotate(${s*6}deg)`;
+let d=new Date();
+hour.style.transform=`rotate(${(d.getHours()%12)*30+d.getMinutes()*.5}deg)`;
+minute.style.transform=`rotate(${d.getMinutes()*6}deg)`;
+second.style.transform=`rotate(${d.getSeconds()*6}deg)`;
 }
-setInterval(updateClock,1000);
-updateClock();
+setInterval(updateClock,1000);updateClock();
 
-
-/* DATE (Hijri + Gregorian) */
-
-function toArabicDigits(str){
-  const map = {
-    "0":"٠","1":"١","2":"٢","3":"٣","4":"٤",
-    "5":"٥","6":"٦","7":"٧","8":"٨","9":"٩"
-  };
-  return str.replace(/[0-9]/g, d => map[d]);
-}
-
+/* DATE */
+function toArabicDigits(s){return s.replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);}
 function updateDate(){
-
-  const now = new Date();
-
-  // اليوم بالعربية
-  const days = [
-    "الأحد","الاثنين","الثلاثاء",
-    "الأربعاء","الخميس","الجمعة","السبت"
-  ];
-
-  const dayName = days[now.getDay()];
-
-  // التاريخ الميلادي
-  const gregorianFormatter = new Intl.DateTimeFormat("ar-EG",{
-    day:"numeric",
-    month:"long",
-    year:"numeric"
-  });
-
-  const gregorianDate = gregorianFormatter.format(now);
-
-  // التاريخ الهجري
-  const hijriFormatter = new Intl.DateTimeFormat("ar-SA-u-ca-islamic",{
-    day:"numeric",
-    month:"long",
-    year:"numeric"
-  });
-
-   let hijriDate = hijriFormatter.format(now);
-
-   // نشيل أي رمز سنة موجود مسبقًا (لو ظهر)
-     hijriDate = hijriDate.replace(/\s?هـ/, "").trim();
-
-   // نضيف هـ مباشرة بعد السنة بدون مسافة
-   hijriDate += "هـ";
-
-  document.getElementById("dateBox").innerHTML = `
-    ${dayName} ${toArabicDigits(hijriDate)}<br>
-    الموافق ${toArabicDigits(gregorianDate)}م
-  `;
+let d=new Date();
+let days=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+let hijri=new Intl.DateTimeFormat("ar-SA-u-ca-islamic",{day:"numeric",month:"long",year:"numeric"}).format(d);
+hijri=hijri.replace(/\s?هـ/,"").trim()+"هـ";
+let greg=new Intl.DateTimeFormat("ar-EG",{day:"numeric",month:"long",year:"numeric"}).format(d);
+dateBox.innerHTML=`${days[d.getDay()]} ${toArabicDigits(hijri)}<br>الموافق ${toArabicDigits(greg)}م`;
 }
+updateDate();setInterval(updateDate,60000);
 
-updateDate();
-setInterval(updateDate, 60000);
-
-
-function toMin(t){const [h,m]=t.split(":").map(Number);return h*60+m;}
-
+/* SCHEDULE */
+function toMin(t){let[a,b]=t.split(":").map(Number);return a*60+b;}
 const schedule=[
-{name:"الحصة الأولى",start:"09:00",end:"09:35",sound:"00.MP3"},
-{name:"الحصة الثانية",start:"09:35",end:"10:10",sound:"01.MP3"},
-{name:"الحصة الثالثة",start:"10:10",end:"10:45",sound:"02.MP3"},
-{name:"الحصة الرابعة",start:"10:45",end:"11:20",sound:"03.MP3"},
-{name:"الحصة الخامسة",start:"11:20",end:"11:55",sound:"04.MP3"},
-{name:"الحصة السادسة",start:"11:55",end:"12:30",sound:"05.MP3"},
-{name:"أداء صلاة الظهر",start:"12:30",end:"12:45",sound:"06.MP3"}
+{name:"الحصة الأولى",start:"09:00",end:"09:35"},
+{name:"الحصة الثانية",start:"09:35",end:"10:10"},
+{name:"الحصة الثالثة",start:"10:10",end:"10:45"},
+{name:"الحصة الرابعة",start:"10:45",end:"11:20"},
+{name:"الحصة الخامسة",start:"11:20",end:"11:55"},
+{name:"الحصة السادسة",start:"11:55",end:"12:30"},
+{name:"أداء صلاة الظهر",start:"12:30",end:"12:45"}
 ];
 
-/* PRELOAD AUDIO */
-const preloadedAudio = {};
-let totalLoadedBytes = 0;
-let totalBytes = 0;
-let loadedFiles = 0;
-
-function preloadSounds(){
-
-  schedule.forEach(event=>{
-
-    const audio = new Audio(`audio/${event.sound}`);
-    audio.preload = "auto";
-
-    audio.addEventListener("loadedmetadata",()=>{
-      if(audio.duration){
-        totalBytes += 1; 
-      }
-    });
-
-    audio.addEventListener("progress",()=>{
-      if(audio.buffered.length > 0){
-        const loaded = audio.buffered.end(0);
-        const percent = Math.min((loaded / audio.duration) * 100, 100);
-
-        // متوسط تقريبي لكل الملفات
-        const overall = Math.round(
-          ((loadedFiles + (percent/100)) / schedule.length) * 100
-        );
-
-        document.getElementById("progressBar").style.width = overall + "%";
-        document.getElementById("progressText").innerText = overall + "%";
-      }
-    });
-
-    audio.addEventListener("canplaythrough",()=>{
-      loadedFiles++;
-
-      if(loadedFiles === schedule.length){
-        setTimeout(()=>{
-          const loading=document.getElementById("loadingScreen");
-          loading.style.opacity="0";
-          setTimeout(()=>{
-            loading.style.display="none";
-            startSystem();
-          },800);
-        },500);
-      }
-    });
-
-    audio.load();
-    preloadedAudio[event.sound]=audio;
-
-  });
-
-}
-
-let lastEvent=localStorage.getItem("lastEvent")||"";
+let lastEvent="";
 let prevEvent=null;
 
-function getCurrent(arr,current){
-return arr.find(e=>current>=toMin(e.start)&&current<toMin(e.end));
-}
+function getCurrent(c){return schedule.find(e=>c>=toMin(e.start)&&c<toMin(e.end));}
 
 function checkSchedule(){
-const now=new Date();
-const current=now.getHours()*60+now.getMinutes();
-const currentEvent=getCurrent(schedule,current);
-const box=document.getElementById("statusBox");
+let now=new Date();
+let current=now.getHours()*60+now.getMinutes();
+let currentEvent=getCurrent(current);
+let currentName=currentEvent?currentEvent.name:"";
+let today=now.getDay();
+let blocked=[5,6];
 
 if(currentEvent){
-box.style.display="block";
-box.innerHTML=`🟢 الآن ${currentEvent.name}`;
-}else{
-box.style.display="none";
-}
+statusBox.style.display="block";
+statusBox.innerHTML=`🟢 الآن ${currentEvent.name}`;
+}else statusBox.style.display="none";
 
-const today = new Date().getDay(); 
-// الأحد=0 ... الجمعة=5 ... السبت=6
-
-const blockedDays = [5,6]; // الجمعة والسبت
-
-if(currentName !== lastEvent && currentEvent){
-
-  if(!blockedDays.includes(today)){
-    showTransition(prevEvent, currentEvent);
-  }
-
-  localStorage.setItem("lastEvent", currentName);
-  lastEvent = currentName;
-}prevEvent=currentEvent||null;
-}
-
-function showTransition(oldEvent,newEvent){
-const overlay=document.getElementById("overlay");
-if(!newEvent)return;
-
-let message="";
-if(oldEvent&&oldEvent.name!==newEvent.name){
-message=`🟢 انتهت ${oldEvent.name}<br>وتبدأ الآن ${newEvent.name}`;
-}else if(!oldEvent){
-message=`🟢 تبدأ الآن ${newEvent.name}`;
-}else{return;}
-
-overlay.innerHTML=`<div class="overlay-content">${message}</div>`;
-overlay.classList.remove("hide");
+if(currentName!==lastEvent && currentEvent){
+if(!blocked.includes(today)){
+overlay.innerHTML=`🟢 تبدأ الآن ${currentEvent.name}`;
 overlay.classList.add("show");
-
-if(preloadedAudio[newEvent.sound]){
-preloadedAudio[newEvent.sound].currentTime=0;
-preloadedAudio[newEvent.sound].play();
+setTimeout(()=>overlay.classList.remove("show"),12000);
 }
-
-setTimeout(()=>{
-overlay.classList.add("hide");
-setTimeout(()=>{
-overlay.classList.remove("show","hide");
-},600);
-},12000);
+lastEvent=currentName;
 }
-
-function startSystem(){
-setInterval(checkSchedule,1000);
-checkSchedule();
+prevEvent=currentEvent;
 }
-
-preloadSounds();
+setInterval(checkSchedule,1000);checkSchedule();
 
 /* SLIDER */
 const slider=document.getElementById("slider");
-let slides=[],currentSlide=0;
-for(let i=1;i<=300;i++){
+let slides=[],i=1;
+for(;i<=10;i++){   /* عددي عدد صورك هنا */
 let img=document.createElement("img");
 img.src=`preimg/Slide${i}.JPG`;
-img.classList.add("slide");
+img.className="slide";
 slider.appendChild(img);
 slides.push(img);
 }
+if(slides.length){
 slides[0].classList.add("active");
+let c=0;
 setInterval(()=>{
-slides[currentSlide].classList.remove("active");
-currentSlide=(currentSlide+1)%slides.length;
-slides[currentSlide].classList.add("active");
+slides[c].classList.remove("active");
+c=(c+1)%slides.length;
+slides[c].classList.add("active");
 },5000);
-
-function checkVideoSchedule(){
-
-  const now = new Date();
-
-  const day = now.getDay(); 
-  // الأحد=0، الاثنين=1، الثلاثاء=2، الأربعاء=3، الخميس=4، الجمعة=5، السبت=6
-
-  const currentMinutes = now.getHours()*60 + now.getMinutes();
-
-  const start = 21*60 + 20;   // 9:20 PM
-  const end   = 24*60;        // 12:00 AM
-
-  const allowedDays = [0,1,2,3]; // الأحد - الاثنين - الثلاثاء - الأربعاء
-
-  const video = document.getElementById("bgVideo");
-
-  if(allowedDays.includes(day) && currentMinutes >= start && currentMinutes < end){
-    video.style.display = "block";
-    video.play();
-  }else{
-    video.pause();
-    video.style.display = "none";
-  }
-
 }
 
-// فحص كل 30 ثانية
-setInterval(checkVideoSchedule, 30000);
-checkVideoSchedule();
+/* VIDEO SCHEDULE + FADE */
+function checkVideo(){
+let now=new Date();
+let day=now.getDay();
+let min=now.getHours()*60+now.getMinutes();
+let start=21*60+20,end=24*60;
+let allowed=[0,1,2,3];
+
+if(allowed.includes(day)&&min>=start&&min<end){
+bgVideo.style.opacity=1;
+slider.style.opacity=0;
+bgVideo.play();
+}else{
+bgVideo.style.opacity=0;
+slider.style.opacity=1;
+bgVideo.pause();
+}
+}
+setInterval(checkVideo,30000);
+checkVideo();
+
+loadingScreen.style.display="none";
 
 </script>
 </body>
