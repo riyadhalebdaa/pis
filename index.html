@@ -9,207 +9,200 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:Arial;background:#fff;overflow:hidden;}
 
+/* LOADING SCREEN */
+#loadingScreen{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000;
+color:#fff;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+font-size:28px;
+z-index:2000;
+direction:rtl;
+transition:opacity 0.8s ease;
+opacity:1;
+}
+
+#progressContainer{
+width:400px;
+height:20px;
+background:#333;
+margin-top:25px;
+border-radius:10px;
+overflow:hidden;
+}
+
+#progressBar{
+height:100%;
+width:0%;
+background:#00c853;
+transition:width 0.3s;
+}
+
+#progressText{
+margin-top:15px;
+font-size:22px;
+}
+
 /* LOGO */
 .logo-container{
-  position:absolute;top:20px;right:30px;
-  background:#fff;padding:15px 40px;
-  border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,0.08);
-  z-index:10;
+position:absolute;top:20px;right:30px;
+background:#fff;padding:15px 40px;
+border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,0.08);
+z-index:10;
 }
 .logo-container img{height:70px;}
 
 /* SLIDER */
 .slider{position:fixed;width:100%;height:100%;z-index:-1;}
 .slide{
-  position:absolute;width:100%;height:100%;
-  object-fit:cover;opacity:0;
-  transition:opacity 1.5s ease-in-out;
+position:absolute;width:100%;height:100%;
+object-fit:cover;opacity:0;
+transition:opacity 1.5s ease-in-out;
 }
 .slide.active{opacity:1;}
 
 /* CLOCK */
 .clock{
-  position:absolute;
-  top:40px;
-  left:40px;
-  width:240px;
-  height:240px;
-  border-radius:50%;
-
-  background:rgba(255,255,255,0.50);
-  backdrop-filter: blur(6px);
-
-  border:6px solid rgba(0,0,0,0.75);
-  box-shadow:
-    0 0 0 6px rgba(255,255,255,0.6),
-    0 15px 35px rgba(0,0,0,0.25);
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
+position:absolute;
+top:40px;
+left:40px;
+width:240px;
+height:240px;
+border-radius:50%;
+background:rgba(255,255,255,0.50);
+backdrop-filter: blur(6px);
+border:6px solid rgba(0,0,0,0.75);
+box-shadow:
+0 0 0 6px rgba(255,255,255,0.6),
+0 15px 35px rgba(0,0,0,0.25);
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
-/* مركز الساعة */
 .center{
-  position:absolute;
-  width:16px;
-  height:16px;
-  background:#000;
-  border-radius:50%;
-  z-index:10;
+position:absolute;
+width:16px;
+height:16px;
+background:#000;
+border-radius:50%;
+z-index:10;
 }
 
 .clock-logo{
-  position:absolute;
-  width:50px;              /* حجم اللوجو */
-  opacity:1;            /* الشفافية */
-  z-index:2;               /* بين الخلفية والعقارب */
-  top:30%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  pointer-events:none;     /* ما يأثرش على أي حاجة */
+position:absolute;
+width:50px;
+z-index:2;
+top:30%;
+left:50%;
+transform:translate(-50%,-50%);
+pointer-events:none;
 }
 
-
-/* العقارب */
 .hand{
-  position:absolute;
-  bottom:50%;
-  transform-origin:bottom;
-  border-radius:10px;
-  z-index:5;   /* أعلى من اللوجو */
+position:absolute;
+bottom:50%;
+transform-origin:bottom;
+border-radius:10px;
+z-index:5;
 }
 
-.hour{
-  width:7px;
-  height:65px;
-  background:#111;
-}
+.hour{width:7px;height:65px;background:#111;}
+.minute{width:4px;height:95px;background:#333;}
+.second{width:2px;height:105px;background:#d40000;}
 
-.minute{
-  width:4px;
-  height:95px;
-  background:#333;
-}
-
-.second{
-  width:2px;
-  height:105px;
-  background:#d40000;
-}
 .number{
-  position:absolute;
-  font-size:22px;
-  font-weight:500;
-  color:#111;
-  transform:translate(-50%,-50%);
-  font-family:"Arial", sans-serif;
-  z-index:6;
+position:absolute;
+font-size:22px;
+font-weight:500;
+color:#111;
+transform:translate(-50%,-50%);
+z-index:6;
 }
 
 .number.bold{
-  font-weight:800;
-  font-size:29px;
+font-weight:800;
+font-size:29px;
 }
+
 .tick{
-  position:absolute;
-  width:3px;
-  height:7px;
-  background:#222;
-  top:5px;
-  left:49%;
-  transform-origin:50% 110px;
+position:absolute;
+width:3px;
+height:7px;
+background:#222;
+top:5px;
+left:49%;
+transform-origin:50% 110px;
 }
+.tick.small{height:3px;width:2px;background:#555;}
 
-.tick.small{
-  height:3px;
-  width:2px;
-  background:#555;
-}
-
-
-/* STATUS */
 .status{
-  position:absolute;bottom:40px;right:40px;
-  background:rgba(255,255,255,0.95);
-  padding:18px 35px;border-radius:15px;
-  font-size:22px;font-weight:bold;
-  box-shadow:0 10px 25px rgba(0,0,0,0.15);
-  display:none;line-height:1.8;direction: rtl;
-  text-align: right;
+position:absolute;bottom:40px;right:40px;
+background:rgba(255,255,255,0.95);
+padding:18px 35px;border-radius:15px;
+font-size:22px;font-weight:bold;
+box-shadow:0 10px 25px rgba(0,0,0,0.15);
+display:none;line-height:1.8;direction:rtl;
+text-align:right;
 }
 
-/* OVERLAY WITH ZOOM */
 .overlay{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.65);
-
-  display:flex;
-  justify-content:center;
-  align-items:center;
-
-  color:#fff;
-  font-size:46px;
-  font-weight:bold;
-
-  padding:40px;
-
-  opacity:0;
-  visibility:hidden;
-  transition:opacity 0.6s ease;
-  z-index:999;
+position:fixed;
+top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.65);
+display:flex;justify-content:center;align-items:center;
+color:#fff;font-size:46px;font-weight:bold;
+padding:40px;
+opacity:0;visibility:hidden;
+transition:opacity 0.6s ease;
+z-index:999;
 }
 
 .overlay-content{
-  direction:rtl;
-  text-align:right;
-  transform:scale(0.8);
-  opacity:0;
-  transition:transform 0.6s ease, opacity 0.6s ease;
+direction:rtl;text-align:right;
+transform:scale(0.8);
+opacity:0;
+transition:transform 0.6s ease, opacity 0.6s ease;
 }
 
-.overlay.show{
-  opacity:1;
-  visibility:visible;
-}
-
-.overlay.show .overlay-content{
-  transform:scale(1);
-  opacity:1;
-}
-
-.overlay.hide .overlay-content{
-  transform:scale(0.6);
-  opacity:0;
-}
-
+.overlay.show{opacity:1;visibility:visible;}
+.overlay.show .overlay-content{transform:scale(1);opacity:1;}
+.overlay.hide .overlay-content{transform:scale(0.6);opacity:0;}
 </style>
 </head>
 <body>
 
+<div id="loadingScreen">
+<div>⏳ جاري تحميل النظام...</div>
+<div id="progressContainer">
+<div id="progressBar"></div>
+</div>
+<div id="progressText">0%</div>
+</div>
+
 <div class="logo-container">
-  <img src="logo.png">
+<img src="logo.png">
 </div>
 
 <div class="slider" id="slider"></div>
 
 <div class="clock">
-  <img src="logo_without_texts.png" class="clock-logo">
-
-  <div class="hand hour"></div>
-  <div class="hand minute"></div>
-  <div class="hand second"></div>
-  <div class="center"></div>
+<img src="logo_without_texts.png" class="clock-logo">
+<div class="hand hour"></div>
+<div class="hand minute"></div>
+<div class="hand second"></div>
+<div class="center"></div>
 </div>
 
 <div class="status" id="statusBox"></div>
 <div class="overlay" id="overlay"></div>
-
-<audio id="bell"></audio>
 
 <script>
 
@@ -217,180 +210,164 @@ body{font-family:Arial;background:#fff;overflow:hidden;}
 const hour=document.querySelector(".hour");
 const minute=document.querySelector(".minute");
 const second=document.querySelector(".second");
-
-/* CLOCK NUMBERS */
 const clock=document.querySelector(".clock");
 
 const arabicNumbers=["١","٢","٣","٤","٥","٦","٧","٨","٩","١٠","١١","١٢"];
 
 for(let i=1;i<=12;i++){
-  const num=document.createElement("div");
-  num.classList.add("number");
-  
-  if([3,6,9,12].includes(i)){
-    num.classList.add("bold");
-  }
-
-  num.textContent=arabicNumbers[i-1];
-
-  const angle=(i*30)*(Math.PI/180);
-  const radius=87; // المسافة من المركز
-
-  const x=113 + radius*Math.sin(angle);
-  const y=116 - radius*Math.cos(angle);
-
-  num.style.left=x+"px";
-  num.style.top=y+"px";
-
-  clock.appendChild(num);
+const num=document.createElement("div");
+num.classList.add("number");
+if([3,6,9,12].includes(i)){num.classList.add("bold");}
+num.textContent=arabicNumbers[i-1];
+const angle=(i*30)*(Math.PI/180);
+const radius=87;
+const x=113 + radius*Math.sin(angle);
+const y=116 - radius*Math.cos(angle);
+num.style.left=x+"px";
+num.style.top=y+"px";
+clock.appendChild(num);
 }
 
-/* MINUTE TICKS */
 for(let i=0;i<60;i++){
-  const tick=document.createElement("div");
-  tick.classList.add("tick");
-
-  if(i%5!==0){
-    tick.classList.add("small");
-  }
-
-  tick.style.transform=`rotate(${i*6}deg)`;
-
-  clock.appendChild(tick);
+const tick=document.createElement("div");
+tick.classList.add("tick");
+if(i%5!==0){tick.classList.add("small");}
+tick.style.transform=`rotate(${i*6}deg)`;
+clock.appendChild(tick);
 }
-
-
 
 function updateClock(){
-  const now=new Date();
-  const h=now.getHours()%12;
-  const m=now.getMinutes();
-  const s=now.getSeconds();
-  hour.style.transform=`rotate(${(h*30)+(m*0.5)}deg)`;
-  minute.style.transform=`rotate(${m*6}deg)`;
-  second.style.transform=`rotate(${s*6}deg)`;
+const now=new Date();
+const h=now.getHours()%12;
+const m=now.getMinutes();
+const s=now.getSeconds();
+hour.style.transform=`rotate(${(h*30)+(m*0.5)}deg)`;
+minute.style.transform=`rotate(${m*6}deg)`;
+second.style.transform=`rotate(${s*6}deg)`;
 }
 setInterval(updateClock,1000);updateClock();
 
-/* UTIL */
-function toMin(t){
-  const [h,m]=t.split(":").map(Number);
-  return h*60+m;
-}
+function toMin(t){const [h,m]=t.split(":").map(Number);return h*60+m;}
 
-/* SCHEDULE */
 const schedule=[
- {name:"الحصة الأولى",start:"04:48",end:"04:50", sound:"00.MP3"},
- {name:"الحصة الثانية",start:"04:50",end:"04:52", sound:"01.MP3"},
- {name:"الحصة الثالثة",start:"04:52",end:"04:54", sound:"02.MP3"},
- {name:"الحصة الرابعة",start:"04:54",end:"04:56", sound:"03.MP3"},
- {name:"الحصة الخامسة",start:"04:56",end:"04:58", sound:"04.MP3"},
- {name:"الحصة السادسة",start:"04:58",end:"05:00", sound:"05.MP3"},
- {name:"أداء صلاة الظهر",start:"05:00",end:"05:02", sound:"06.MP3"}
+{name:"الحصة الأولى",start:"04:48",end:"04:50",sound:"00.MP3"},
+{name:"الحصة الثانية",start:"04:50",end:"04:52",sound:"01.MP3"},
+{name:"الحصة الثالثة",start:"04:52",end:"04:54",sound:"02.MP3"},
+{name:"الحصة الرابعة",start:"04:54",end:"04:56",sound:"03.MP3"},
+{name:"الحصة الخامسة",start:"04:56",end:"04:58",sound:"04.MP3"},
+{name:"الحصة السادسة",start:"04:58",end:"05:00",sound:"05.MP3"},
+{name:"أداء صلاة الظهر",start:"05:00",end:"05:02",sound:"06.MP3"}
 ];
 
-let lastEvent = localStorage.getItem("lastEvent") || "";
-let prevEvent = null;
+/* PRELOAD AUDIO */
+const preloadedAudio={};
+let soundsLoaded=0;
+const totalSounds=schedule.length;
 
+function preloadSounds(){
+schedule.forEach(event=>{
+const audio=new Audio(`audio/${event.sound}`);
+audio.preload="auto";
+audio.addEventListener("canplaythrough",()=>{
+soundsLoaded++;
+const percent=Math.round((soundsLoaded/totalSounds)*100);
+document.getElementById("progressBar").style.width=percent+"%";
+document.getElementById("progressText").innerText=percent+"%";
+if(soundsLoaded===totalSounds){
+setTimeout(()=>{
+const loading=document.getElementById("loadingScreen");
+loading.style.opacity="0";
+setTimeout(()=>{
+loading.style.display="none";
+startSystem();
+},800);
+},500);
+}
+});
+audio.load();
+preloadedAudio[event.sound]=audio;
+});
+}
+
+let lastEvent=localStorage.getItem("lastEvent")||"";
+let prevEvent=null;
 
 function getCurrent(arr,current){
-  return arr.find(e=>current>=toMin(e.start)&&current<toMin(e.end));
+return arr.find(e=>current>=toMin(e.start)&&current<toMin(e.end));
 }
 
 function checkSchedule(){
-  const now=new Date();
-  const current=now.getHours()*60+now.getMinutes();
+const now=new Date();
+const current=now.getHours()*60+now.getMinutes();
+const currentEvent=getCurrent(schedule,current);
+const box=document.getElementById("statusBox");
 
-  const currentEvent=getCurrent(schedule,current);
-
-  const box=document.getElementById("statusBox");
-
-  if(currentEvent){
-    box.style.display="block";
-    box.innerHTML=`🟢 الآن ${currentEvent.name}`;
-  }else{
-    box.style.display="none";
-  }
-
-
-const currentName = currentEvent ? currentEvent.name : "";
-
-if(currentName !== lastEvent && currentEvent){
-    showTransition(prevEvent,currentEvent);
-    localStorage.setItem("lastEvent", currentName);
-    lastEvent = currentName;
+if(currentEvent){
+box.style.display="block";
+box.innerHTML=`🟢 الآن ${currentEvent.name}`;
+}else{
+box.style.display="none";
 }
 
-
-  prevEvent=currentEvent || null;
+const currentName=currentEvent?currentEvent.name:"";
+if(currentName!==lastEvent&&currentEvent){
+showTransition(prevEvent,currentEvent);
+localStorage.setItem("lastEvent",currentName);
+lastEvent=currentName;
 }
-
+prevEvent=currentEvent||null;
+}
 
 function showTransition(oldEvent,newEvent){
+const overlay=document.getElementById("overlay");
+if(!newEvent)return;
 
-  const overlay=document.getElementById("overlay");
-  const bell=document.getElementById("bell");
+let message="";
+if(oldEvent&&oldEvent.name!==newEvent.name){
+message=`🟢 انتهت ${oldEvent.name}<br>وتبدأ الآن ${newEvent.name}`;
+}else if(!oldEvent){
+message=`🟢 تبدأ الآن ${newEvent.name}`;
+}else{return;}
 
-  if(!newEvent) return;
+overlay.innerHTML=`<div class="overlay-content">${message}</div>`;
+overlay.classList.remove("hide");
+overlay.classList.add("show");
 
-  let message="";
-
-  /* 🔹 لو فيه حصة قبلها */
-  if(oldEvent && oldEvent.name !== newEvent.name){
-    message =
-      `🟢 انتهت ${oldEvent.name}<br>
-       وتبدأ الآن ${newEvent.name}`;
-  }
-  /* 🔹 لو دي أول حصة في اليوم */
-  else if(!oldEvent){
-    message =
-      `🟢 تبدأ الآن ${newEvent.name}`;
-  }
-  else{
-    return;
-  }
-
-  overlay.innerHTML=`<div class="overlay-content">${message}</div>`;
-
-  overlay.classList.remove("hide");
-  overlay.classList.add("show");
-
-  /* 🔔 تشغيل الصوت المحدد */
-if(newEvent.sound){
-  bell.src = `audio/${newEvent.sound}`;
-  bell.currentTime = 0;
-  bell.play();
+if(preloadedAudio[newEvent.sound]){
+preloadedAudio[newEvent.sound].currentTime=0;
+preloadedAudio[newEvent.sound].play();
 }
 
 setTimeout(()=>{
-  overlay.classList.add("hide");
-
-  setTimeout(()=>{
-    overlay.classList.remove("show","hide");
-  },600);
-
+overlay.classList.add("hide");
+setTimeout(()=>{
+overlay.classList.remove("show","hide");
+},600);
 },12000);
 }
 
-
+function startSystem(){
 setInterval(checkSchedule,1000);
 checkSchedule();
+}
+
+preloadSounds();
 
 /* SLIDER */
 const slider=document.getElementById("slider");
 let slides=[],currentSlide=0;
 for(let i=1;i<=300;i++){
-  let img=document.createElement("img");
-  img.src=`preimg/Slide${i}.JPG`;
-  img.classList.add("slide");
-  slider.appendChild(img);
-  slides.push(img);
+let img=document.createElement("img");
+img.src=`preimg/Slide${i}.JPG`;
+img.classList.add("slide");
+slider.appendChild(img);
+slides.push(img);
 }
 slides[0].classList.add("active");
 setInterval(()=>{
-  slides[currentSlide].classList.remove("active");
-  currentSlide=(currentSlide+1)%slides.length;
-  slides[currentSlide].classList.add("active");
+slides[currentSlide].classList.remove("active");
+currentSlide=(currentSlide+1)%slides.length;
+slides[currentSlide].classList.add("active");
 },5000);
 
 </script>
