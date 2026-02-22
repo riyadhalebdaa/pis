@@ -7,7 +7,12 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:Arial;background:#fff;overflow:hidden;}
+body{
+  font-family:Arial;
+  background:#000;
+  overflow:hidden;
+  visibility:hidden;
+}
 
 /* LOADING */
 #loadingScreen{
@@ -126,7 +131,7 @@ z-index:999;
 <div id="loadingScreen">
 <div>⏳ جاري تحميل النظام...</div>
 <div id="progressContainer"><div id="progressBar"></div></div>
-<div id="progressText">100%</div>
+<div id="progressText">0%</div>
 </div>
 
 <div class="logo-container"><img src="logo.png"></div>
@@ -145,6 +150,25 @@ z-index:999;
 <div class="overlay" id="overlay"></div>
 
 <script>
+
+/* =========================
+   تجهيز أصوات الحصص
+========================= */
+
+const lessonSounds = {
+  "الحصة الأولى": new Audio("audio/00.MP3"),
+  "الحصة الثانية": new Audio("audio/01.MP3"),
+  "الحصة الثالثة": new Audio("audio/02.MP3"),
+  "الحصة الرابعة": new Audio("audio/03.MP3"),
+  "الحصة الخامسة": new Audio("audio/04.MP3"),
+  "الحصة السادسة": new Audio("audio/05.MP3"),
+  "أداء صلاة الظهر": new Audio("audio/06.MP3")
+};
+
+Object.values(lessonSounds).forEach(a => {
+  a.preload = "auto";
+});
+
 
 /* CLOCK */
 const hour=document.querySelector(".hour");
@@ -226,7 +250,17 @@ if(currentName!==lastEvent && currentEvent){
 if(!blocked.includes(today)){
 overlay.innerHTML=`🟢 تبدأ الآن ${currentEvent.name}`;
 overlay.classList.add("show");
-setTimeout(()=>overlay.classList.remove("show"),12000);
+
+/* تشغيل الصوت */
+const sound = lessonSounds[currentEvent.name];
+if(sound){
+  sound.currentTime = 0;
+  sound.play().catch(()=>{});
+}
+
+setTimeout(()=>{
+  overlay.classList.remove("show");
+},12000);
 }
 lastEvent=currentName;
 }
@@ -298,7 +332,88 @@ bgVideo.pause();
 setInterval(checkVideo,30000);
 checkVideo();
 
-loadingScreen.style.display="none";
+
+/* =========================
+   LOADING SYSTEM
+========================= */
+
+window.addEventListener("load", () => {
+
+   document.body.style.visibility = "visible";
+
+  const loading = document.getElementById("loadingScreen");
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
+
+  const firstImagesCount = 5;
+
+  const audioFiles = [
+    "00.MP3",
+    "01.MP3",
+    "02.MP3",
+    "03.MP3",
+    "04.MP3",
+    "05.MP3",
+    "06.MP3"
+  ];
+
+  let filesToLoad = [];
+  let loaded = 0;
+
+  /* أول 5 صور */
+  for (let i = 1; i <= firstImagesCount; i++) {
+    filesToLoad.push(`preimg/Slide${i}.JPG`);
+  }
+
+  /* كل الأصوات */
+  audioFiles.forEach(file => {
+    filesToLoad.push(`audio/${file}`);
+  });
+
+  const totalFiles = filesToLoad.length;
+
+  function updateProgress() {
+
+    loaded++;
+    const percent = Math.floor((loaded / totalFiles) * 100);
+
+    progressBar.style.width = percent + "%";
+    progressText.textContent = percent + "%";
+
+    if (loaded >= totalFiles) {
+
+      setTimeout(() => {
+        loading.style.opacity = "0";
+        setTimeout(() => {
+          loading.style.display = "none";
+        }, 800);
+      }, 400);
+
+    }
+  }
+
+  filesToLoad.forEach(src => {
+
+    if (src.includes("preimg")) {
+
+      const img = new Image();
+      img.src = src;
+      img.onload = updateProgress;
+      img.onerror = updateProgress;
+
+    } else {
+
+      const audio = new Audio();
+      audio.src = src;
+      audio.preload = "auto";
+      audio.oncanplaythrough = updateProgress;
+      audio.onerror = updateProgress;
+
+    }
+
+  });
+
+});
 
 </script>
 </body>
