@@ -472,44 +472,49 @@
         return schedule.find((e) => c >= toMin(e.start) && c < toMin(e.end));
       }
 
+      function getNextEvent(nowMinutes) {
+        return schedule.find((e) => nowMinutes < toMin(e.start));
+      }
 
-function getNextEvent(nowMinutes) {
-  return schedule.find((e) => nowMinutes < toMin(e.start));
-}
+      function checkSchedule() {
+        let now = new Date();
+        let current = now.getHours() * 60 + now.getMinutes();
+        let currentEvent = getCurrent(current);
+        let currentName = currentEvent ? currentEvent.name : "";
+        let today = now.getDay();
+        let blocked = [5, 6]; // الجمعة والسبت
 
-
-function checkSchedule() {
-
-  let now = new Date();
-  let current = now.getHours() * 60 + now.getMinutes();
-  let currentEvent = getCurrent(current);
-  let currentName = currentEvent ? currentEvent.name : "";
-  let today = now.getDay();
-  let blocked = [5, 6]; // الجمعة والسبت
-
-  /* =========================
+        /* =========================
      عرض الحصة الحالية
   ========================= */
 
-  if (currentEvent) {
+        if (currentEvent) {
+          statusBox.style.display = "block";
 
-    statusBox.style.display = "block";
+          const startMin = toMin(currentEvent.start);
+          const endMin = toMin(currentEvent.end);
+          const totalDuration = endMin - startMin;
+          const elapsed = current - startMin;
+          const remaining = endMin - current;
+          function formatRemainingMinutes(n) {
+            if (n === 1) return "متبقي دقيقة";
 
-    const startMin = toMin(currentEvent.start);
-    const endMin = toMin(currentEvent.end);
-    const totalDuration = endMin - startMin;
-    const elapsed = current - startMin;
-    const remaining = endMin - current;
+            if (n === 2) return "متبقي دقيقتان";
 
-    const percent = Math.min((elapsed / totalDuration) * 100, 100);
+            if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
 
-    function toArabicNumber(num) {
-      return num.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
-    }
+            return `متبقي ${toArabicNumber(n)} دقيقة`;
+          }
 
-    const isEndingSoon = remaining <= 5;
+          const percent = Math.min((elapsed / totalDuration) * 100, 100);
 
-    statusBox.innerHTML = `
+          function toArabicNumber(num) {
+            return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+          }
+
+          const isEndingSoon = remaining <= 5;
+
+          statusBox.innerHTML = `
       <div>🟢 الآن ${currentEvent.name}</div>
 
       <div class="status-time">
@@ -531,69 +536,61 @@ function checkSchedule() {
         </div>
 
         <div class="remaining-time">
-          متبقي ${toArabicNumber(remaining)} دقيقة
-        </div>
+  ${formatRemainingMinutes(remaining)}
+</div>
       </div>
     `;
+        } else {
+          statusBox.style.display = "none";
+        }
 
-  } else {
-
-    statusBox.style.display = "none";
-
-  }
-
-  /* =========================
+        /* =========================
      تنبيه قبل البداية بـ 10 ثواني
   ========================= */
 
-  const nowSeconds =
-    now.getHours() * 3600 +
-    now.getMinutes() * 60 +
-    now.getSeconds();
+        const nowSeconds =
+          now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
-  const nextEvent = getNextEvent(current);
+        const nextEvent = getNextEvent(current);
 
-  if (nextEvent) {
+        if (nextEvent) {
+          const eventStartSeconds = toMin(nextEvent.start) * 60;
 
-    const eventStartSeconds = toMin(nextEvent.start) * 60;
+          if (
+            nowSeconds >= eventStartSeconds - 10 &&
+            nowSeconds < eventStartSeconds &&
+            lastEvent !== nextEvent.name
+          ) {
+            if (!blocked.includes(today)) {
+              const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
 
-    if (
-      nowSeconds >= eventStartSeconds - 10 &&
-      nowSeconds < eventStartSeconds &&
-      lastEvent !== nextEvent.name
-    ) {
-
-      if (!blocked.includes(today)) {
-
-        const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
-
-        overlay.innerHTML = `
+              overlay.innerHTML = `
           <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
             <span class="pulse-dot">🟢</span>
             <span>${verb} الآن ${nextEvent.name}</span>
           </div>
         `;
 
-        overlay.classList.add("show");
+              overlay.classList.add("show");
 
-        const sound = lessonSounds[nextEvent.name];
-        if (sound) {
-          sound.currentTime = 0;
-          sound.play().catch(() => {});
+              const sound = lessonSounds[nextEvent.name];
+              if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(() => {});
+              }
+
+              setTimeout(() => {
+                overlay.classList.remove("show");
+              }, 12000);
+
+              lastEvent = nextEvent.name;
+            }
+          }
         }
-
-        setTimeout(() => {
-          overlay.classList.remove("show");
-        }, 12000);
-
-        lastEvent = nextEvent.name;
       }
-    }
-  }
-}
 
-	setInterval(checkSchedule, 1000);
-	checkSchedule();
+      setInterval(checkSchedule, 1000);
+      checkSchedule();
 
       /* SLIDER */
       const slider = document.getElementById("slider");
