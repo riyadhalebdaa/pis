@@ -467,104 +467,133 @@
       ];
 
       let lastEvent = "";
-      let prevEvent = null;
 
       function getCurrent(c) {
         return schedule.find((e) => c >= toMin(e.start) && c < toMin(e.end));
       }
 
-      function checkSchedule() {
-        let now = new Date();
-        let current = now.getHours() * 60 + now.getMinutes();
-        let currentEvent = getCurrent(current);
-        let currentName = currentEvent ? currentEvent.name : "";
-        let today = now.getDay();
-        let blocked = [5, 6];
 
-        if (currentEvent) {
-          statusBox.style.display = "block";
-          const startMin = toMin(currentEvent.start);
-          const endMin = toMin(currentEvent.end);
-          const totalDuration = endMin - startMin;
-          const elapsed = current - startMin;
-          const remaining = endMin - current;
+function getNextEvent(nowMinutes) {
+  return schedule.find((e) => nowMinutes < toMin(e.start));
+}
 
-          const percent = Math.min((elapsed / totalDuration) * 100, 100);
 
-          // تحويل الأرقام لعربية
-          function toArabicNumber(num) {
-            return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
-          }
+function checkSchedule() {
 
-          const isEndingSoon = remaining <= 5;
+  let now = new Date();
+  let current = now.getHours() * 60 + now.getMinutes();
+  let currentEvent = getCurrent(current);
+  let currentName = currentEvent ? currentEvent.name : "";
+  let today = now.getDay();
+  let blocked = [5, 6]; // الجمعة والسبت
 
-          statusBox.innerHTML = `
-  <div>🟢 الآن ${currentEvent.name}</div>
+  /* =========================
+     عرض الحصة الحالية
+  ========================= */
 
-  <div class="status-time">
-    <div class="time-row">
-      <span class="time-text">${toArabicNumber(currentEvent.start)}</span>
+  if (currentEvent) {
 
-      <div class="progress-container-small">
-        <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}" 
-             style="width:${percent}%"></div>
+    statusBox.style.display = "block";
+
+    const startMin = toMin(currentEvent.start);
+    const endMin = toMin(currentEvent.end);
+    const totalDuration = endMin - startMin;
+    const elapsed = current - startMin;
+    const remaining = endMin - current;
+
+    const percent = Math.min((elapsed / totalDuration) * 100, 100);
+
+    function toArabicNumber(num) {
+      return num.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+    }
+
+    const isEndingSoon = remaining <= 5;
+
+    statusBox.innerHTML = `
+      <div>🟢 الآن ${currentEvent.name}</div>
+
+      <div class="status-time">
+        <div class="time-row">
+
+          <span class="time-text">
+            ${toArabicNumber(currentEvent.start)}
+          </span>
+
+          <div class="progress-container-small">
+            <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}"
+                 style="width:${percent}%"></div>
+          </div>
+
+          <span class="time-text">
+            ${toArabicNumber(currentEvent.end)}
+          </span>
+
+        </div>
+
+        <div class="remaining-time">
+          متبقي ${toArabicNumber(remaining)} دقيقة
+        </div>
       </div>
+    `;
 
-      <span class="time-text">${toArabicNumber(currentEvent.end)}</span>
-    </div>
+  } else {
 
-    <div class="remaining-time">
-      متبقي ${toArabicNumber(remaining)} دقيقة
-    </div>
-  </div>
-`;
-        } else {
-          statusBox.style.display = "none";
+    statusBox.style.display = "none";
+
+  }
+
+  /* =========================
+     تنبيه قبل البداية بـ 10 ثواني
+  ========================= */
+
+  const nowSeconds =
+    now.getHours() * 3600 +
+    now.getMinutes() * 60 +
+    now.getSeconds();
+
+  const nextEvent = getNextEvent(current);
+
+  if (nextEvent) {
+
+    const eventStartSeconds = toMin(nextEvent.start) * 60;
+
+    if (
+      nowSeconds >= eventStartSeconds - 10 &&
+      nowSeconds < eventStartSeconds &&
+      lastEvent !== nextEvent.name
+    ) {
+
+      if (!blocked.includes(today)) {
+
+        const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
+
+        overlay.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
+            <span class="pulse-dot">🟢</span>
+            <span>${verb} الآن ${nextEvent.name}</span>
+          </div>
+        `;
+
+        overlay.classList.add("show");
+
+        const sound = lessonSounds[nextEvent.name];
+        if (sound) {
+          sound.currentTime = 0;
+          sound.play().catch(() => {});
         }
 
-        if (currentName !== lastEvent && currentEvent) {
-          const eventStartMinutes = toMin(currentEvent.start);
-          const eventStartSeconds = eventStartMinutes * 60;
+        setTimeout(() => {
+          overlay.classList.remove("show");
+        }, 12000);
 
-          const nowSeconds =
-            now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-          // لو إحنا قبل البداية بـ 10 ثواني
-          if (
-            nowSeconds >= eventStartSeconds - 10 &&
-            nowSeconds < eventStartSeconds
-          ) {
-            if (!blocked.includes(today)) {
-              const verb = currentEvent.gender === "f" ? "تبدأ" : "يبدأ";
-              overlay.innerHTML = `
-  <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
-    <span class="pulse-dot">🟢</span>
-    <span>${verb} الآن ${currentEvent.name}</span>
-  </div>
-`;
-              overlay.classList.add("show");
-
-              const sound = lessonSounds[currentEvent.name];
-              if (sound) {
-                sound.currentTime = 0;
-                sound.play().catch(() => {});
-              }
-
-              setTimeout(() => {
-                overlay.classList.remove("show");
-              }, 12000);
-            }
-          }
-
-          // لازم تكون هنا بره شرط الـ 30 ثانية
-          lastEvent = currentName;
-        }
-
-        prevEvent = currentEvent;
+        lastEvent = nextEvent.name;
       }
+    }
+  }
+}
 
-      setInterval(checkSchedule, 1000);
-      checkSchedule();
+	setInterval(checkSchedule, 1000);
+	checkSchedule();
 
       /* SLIDER */
       const slider = document.getElementById("slider");
