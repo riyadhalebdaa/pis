@@ -199,10 +199,72 @@
         border-radius: 15px;
         font-size: 22px;
         font-weight: bold;
+        text-align: center;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         display: none;
         direction: rtl;
         z-index: 5;
+      }
+
+      .status-time {
+        margin-top: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .time-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        direction: rtl;
+      }
+
+      .progress-container-small {
+        flex: 1;
+        height: 8px;
+        background: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .progress-bar-small {
+        height: 100%;
+        width: 0%;
+        background: #00c853;
+        transition:
+          width 1s linear,
+          background 0.3s;
+      }
+
+      .progress-bar-small.ending {
+        background: #f34141;
+        animation: pulseBar 1s infinite;
+      }
+
+      @keyframes pulseBar {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .remaining-time {
+        margin-top: 8px;
+        font-size: 17px;
+        color: #000000;
+        font-weight: bold;
+      }
+
+      .time-text {
+        font-size: 17px;
+        font-weight: bold;
       }
 
       /* DATE */
@@ -421,17 +483,57 @@
 
         if (currentEvent) {
           statusBox.style.display = "block";
-          statusBox.innerHTML = `🟢 الآن ${currentEvent.name}`;
+          const startMin = toMin(currentEvent.start);
+          const endMin = toMin(currentEvent.end);
+          const totalDuration = endMin - startMin;
+          const elapsed = current - startMin;
+          const remaining = endMin - current;
+
+          const percent = Math.min((elapsed / totalDuration) * 100, 100);
+
+          // تحويل الأرقام لعربية
+          function toArabicNumber(num) {
+            return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+          }
+
+          const isEndingSoon = remaining <= 5;
+
+          statusBox.innerHTML = `
+  <div>🟢 الآن ${currentEvent.name}</div>
+
+  <div class="status-time">
+    <div class="time-row">
+      <span class="time-text">${toArabicNumber(currentEvent.start)}</span>
+
+      <div class="progress-container-small">
+        <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}" 
+             style="width:${percent}%"></div>
+      </div>
+
+      <span class="time-text">${toArabicNumber(currentEvent.end)}</span>
+    </div>
+
+    <div class="remaining-time">
+      متبقي ${toArabicNumber(remaining)} دقيقة
+    </div>
+  </div>
+`;
         } else {
           statusBox.style.display = "none";
         }
 
         if (currentName !== lastEvent && currentEvent) {
           const eventStartMinutes = toMin(currentEvent.start);
-          const diff = current - eventStartMinutes;
-          const currentSeconds = now.getSeconds();
+          const eventStartSeconds = eventStartMinutes * 60;
 
-          if (diff === 0 && currentSeconds <= 30) {
+          const nowSeconds =
+            now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+          // لو إحنا قبل البداية بـ 10 ثواني
+          if (
+            nowSeconds >= eventStartSeconds - 10 &&
+            nowSeconds < eventStartSeconds
+          ) {
             if (!blocked.includes(today)) {
               const verb = currentEvent.gender === "f" ? "تبدأ" : "يبدأ";
               overlay.innerHTML = `
