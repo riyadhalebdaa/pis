@@ -373,24 +373,6 @@
     <div class="overlay" id="overlay"></div>
     <div id="athanWhiteFade"></div>
     <video
-      id="bgVideo"
-      autoplay
-      muted
-      loop
-      playsinline
-      style="
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 0;
-        display: none;
-      "
-    >
-      <source src="video/rc.mp4" type="video/mp4" />
-    </video>
-    <video
       id="athanVideo"
       playsinline
       style="
@@ -408,8 +390,8 @@
 
     <script>
       /* =========================
-         تجهيز أصوات الحصص
-      ========================= */
+               تجهيز أصوات الحصص
+            ========================= */
 
       const lessonSounds = {
         "الحصة الأولى": new Audio("audio/00.MP3"),
@@ -426,8 +408,8 @@
       });
 
       /* =========================
-   تعريف العناصر الأساسية
-========================= */
+         تعريف العناصر الأساسية
+      ========================= */
 
       const dateBox = document.getElementById("dateBox");
       const statusBox = document.getElementById("statusBox");
@@ -513,9 +495,9 @@
           year: "numeric",
         }).format(d);
         dateBox.innerHTML = `
-      <div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
-      <div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
-      `;
+            <div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
+            <div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
+            `;
       }
       updateDate();
       setInterval(updateDate, 60000);
@@ -554,8 +536,8 @@
         let blocked = [5, 6]; // الجمعة والسبت
 
         /* =========================
-     عرض الحصة الحالية
-  ========================= */
+           عرض الحصة الحالية
+        ========================= */
 
         if (currentEvent) {
           statusBox.style.display = "block";
@@ -584,38 +566,38 @@
           const isEndingSoon = remaining <= 5;
 
           statusBox.innerHTML = `
-      <div>🟢 الآن ${currentEvent.name}</div>
+            <div>🟢 الآن ${currentEvent.name}</div>
 
-      <div class="status-time">
-        <div class="time-row">
+            <div class="status-time">
+              <div class="time-row">
 
-          <span class="time-text">
-            ${toArabicNumber(currentEvent.start)}
-          </span>
+                <span class="time-text">
+                  ${toArabicNumber(currentEvent.start)}
+                </span>
 
-          <div class="progress-container-small">
-            <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}"
-                 style="width:${percent}%"></div>
-          </div>
+                <div class="progress-container-small">
+                  <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}"
+                       style="width:${percent}%"></div>
+                </div>
 
-          <span class="time-text">
-            ${toArabicNumber(currentEvent.end)}
-          </span>
+                <span class="time-text">
+                  ${toArabicNumber(currentEvent.end)}
+                </span>
 
-        </div>
+              </div>
 
-        <div class="remaining-time">
-  ${formatRemainingMinutes(remaining)}
-</div>
+              <div class="remaining-time">
+        ${formatRemainingMinutes(remaining)}
       </div>
-    `;
+            </div>
+          `;
         } else {
           statusBox.style.display = "none";
         }
 
         /* =========================
-     تنبيه قبل البداية بـ 10 ثواني
-  ========================= */
+           تنبيه قبل البداية بـ 10 ثواني
+        ========================= */
 
         const nowSeconds =
           now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
@@ -634,11 +616,11 @@
               const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
 
               overlay.innerHTML = `
-          <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
-            <span class="pulse-dot">🟢</span>
-            <span>${verb} الآن ${nextEvent.name}</span>
-          </div>
-        `;
+                <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
+                  <span class="pulse-dot">🟢</span>
+                  <span>${verb} الآن ${nextEvent.name}</span>
+                </div>
+              `;
 
               overlay.classList.add("show");
 
@@ -722,8 +704,8 @@
       setInterval(nextSlide, 5000);
 
       /* =========================
-   ONLINE ATHAN SYSTEM – UMM AL QURA API
-========================= */
+         ONLINE ATHAN SYSTEM – UMM AL QURA API
+      ========================= */
 
       const PRAYER_VIDEOS = {
         Fajr: "video/P1.mp4",
@@ -806,10 +788,21 @@
         }, 50);
 
         athanVideo.onended = function () {
-          athanVideo.style.display = "none";
-          slider.style.opacity = 1;
-          bgVideo.play();
-          athanActive = false;
+          // 1️⃣ نبدأ بإخفاء فيديو الأذان تدريجياً
+          athanVideo.style.transition = "opacity 1.5s ease";
+          athanVideo.style.opacity = "0";
+
+          // 2️⃣ نُظهر السلايدر تدريجياً
+          slider.style.transition = "opacity 1.5s ease";
+          slider.style.opacity = "1";
+
+          // 3️⃣ بعد انتهاء الفيد نُخفي الفيديو نهائياً
+          setTimeout(() => {
+            athanVideo.pause();
+            athanVideo.style.display = "none";
+            athanVideo.style.opacity = "1"; // إعادة تعيينه للمرات القادمة
+            athanActive = false;
+          }, 1500);
         };
       }
 
@@ -847,8 +840,8 @@
       setInterval(checkAthanOnline, 1000);
 
       /* ===============================
-   التحكم في فيديو الخلفية rc
-================================ */
+         التحكم في فيديو الخلفية rc
+      ================================ */
 
       function controlBackgroundVideo() {
         const now = new Date();
@@ -877,8 +870,8 @@
       controlNightVideo();
 
       /* =========================
-         LOADING SYSTEM
-      ========================= */
+               LOADING SYSTEM
+            ========================= */
 
       window.addEventListener("load", () => {
         document.body.style.visibility = "visible";
