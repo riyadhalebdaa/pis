@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School Display</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial;
+        background: #000;
+        overflow: hidden;
+        visibility: hidden;
+      }
+
+      /* LOADING */
+      #loadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px;
+        z-index: 9000;
+        direction: rtl;
+        transition: opacity 0.8s ease;
+      }
+      #progressContainer {
+        width: 400px;
+        height: 20px;
+        background: #333;
+        margin-top: 25px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      #progressBar {
+        height: 100%;
+        width: 0%;
+        background: #00c853;
+        transition: width 0.3s;
+      }
+      #progressText {
+        margin-top: 15px;
+        font-size: 22px;
+      }
+
+      /* VIDEO */
+      #bgVideo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 1.2s ease;
+      }
+
+      /* SLIDER */
+      .slider {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        opacity: 1;
+        transition: opacity 1.2s ease;
+      }
+      .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 1.5s ease-in-out;
+      }
+      .slide.active {
+        opacity: 1;
+      }
+
+      /* LOGO */
+      .logo-container {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        background: #fff;
+        padding: 15px 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        z-index: 5000;
+      }
+      .logo-container img {
+        height: 70px;
+      }
+
+      /* CLOCK */
+      .clock {
+        position: absolute;
+        top: 40px;
+        left: 40px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(6px);
+        border: 6px solid rgba(0, 0, 0, 0.75);
+        box-shadow:
+          0 0 0 6px rgba(255, 255, 255, 0.6),
+          0 15px 35px rgba(0, 0, 0, 0.25);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5000;
+      }
+      .center {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: #000;
+        border-radius: 50%;
+        z-index: 10;
+      }
+      .clock-logo {
+        position: absolute;
+        width: 50px;
+        z-index: 2;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+      .hand {
+        position: absolute;
+        bottom: 50%;
+        transform-origin: bottom;
+        border-radius: 10px;
+        z-index: 5;
+      }
+      .hour {
+        width: 7px;
+        height: 65px;
+        background: #111;
+      }
+      .minute {
+        width: 4px;
+        height: 95px;
+        background: #333;
+      }
+      .second {
+        width: 2px;
+        height: 105px;
+        background: #d40000;
+      }
+      .number {
+        position: absolute;
+        font-size: 22px;
+        font-weight: 500;
+        color: #111;
+        transform: translate(-50%, -50%);
+        z-index: 6;
+      }
+      .number.bold {
+        font-weight: 800;
+        font-size: 29px;
+      }
+      .tick {
+        position: absolute;
+        width: 3px;
+        height: 7px;
+        background: #222;
+        top: 5px;
+        left: 49%;
+        transform-origin: 50% 110px;
+      }
+      .tick.small {
+        height: 3px;
+        width: 2px;
+        background: #555;
+      }
+
+      /* STATUS */
+      .status {
+        position: absolute;
+        bottom: 40px;
+        right: 40px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 18px 35px;
+        border-radius: 15px;
+        font-size: 22px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        display: none;
+        direction: rtl;
+        z-index: 5000;
+      }
+
+      .status-time {
+        margin-top: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .time-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        direction: rtl;
+      }
+
+      .progress-container-small {
+        flex: 1;
+        height: 8px;
+        background: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .progress-bar-small {
+        height: 100%;
+        width: 0%;
+        background: #00c853;
+        transition:
+          width 1s linear,
+          background 0.3s;
+      }
+
+      .progress-bar-small.ending {
+        background: #f34141;
+        animation: pulseBar 1s infinite;
+      }
+
+      @keyframes pulseBar {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .remaining-time {
+        margin-top: 8px;
+        font-size: 17px;
+        color: #000000;
+        font-weight: bold;
+      }
+
+      .time-text {
+        font-size: 17px;
+        font-weight: bold;
+      }
+
+      /* DATE */
+      .date-box {
+        position: absolute;
+        bottom: 40px;
+        left: 40px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 18px 30px;
+        border-radius: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        direction: rtl;
+        z-index: 5000;
+      }
+
+      /* OVERLAY */
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.65);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-size: 46px;
+        font-weight: bold;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.6s ease;
+        z-index: 6000;
+      }
+      .overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .pulse-dot {
+        font-size: 50px;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.25);
+          opacity: 0.6;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      #athanVideo {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 4000;
+        display: none;
+      }
+      #athanWhiteFade {
+        position: fixed;
+        inset: 0;
+        background: white;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9998;
+        transition: opacity 2.5s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <video id="bgVideo" autoplay muted loop playsinline>
+      <source src="video/rc.mp4" type="video/mp4" />
+    </video>
+
+    <div id="loadingScreen">
+      <div>⏳ جاري تحميل النظام...</div>
+      <div id="progressContainer"><div id="progressBar"></div></div>
+      <div id="progressText">0%</div>
+    </div>
+
+    <div class="logo-container"><img src="logo.png" /></div>
+    <div class="slider" id="slider"></div>
+
+    <div class="clock">
+      <img src="logo_without_texts.png" class="clock-logo" />
+      <div class="hand hour"></div>
+      <div class="hand minute"></div>
+      <div class="hand second"></div>
+      <div class="center"></div>
+    </div>
+
+    <div class="status" id="statusBox"></div>
+    <div class="date-box" id="dateBox"></div>
+    <div class="overlay" id="overlay"></div>
+    <div id="athanWhiteFade"></div>
+    <video
+      id="athanVideo"
+      playsinline
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 3000;
+      "
+    ></video>
+
+    <audio id="athanAudio" src="audio/athan.MP3"></audio>
+
+    <script>
+          /* =========================
+                   تجهيز أصوات الحصص
+                ========================= */
+
+          const lessonSounds = {
+            "الحصة الأولى": new Audio("audio/00.MP3"),
+            "الحصة الثانية": new Audio("audio/01.MP3"),
+            "الحصة الثالثة": new Audio("audio/02.MP3"),
+            "الحصة الرابعة": new Audio("audio/03.MP3"),
+            "الحصة الخامسة": new Audio("audio/04.MP3"),
+            "الحصة السادسة": new Audio("audio/05.MP3"),
+            "أداء صلاة الظهر": new Audio("audio/06.MP3"),
+          };
+
+          Object.values(lessonSounds).forEach((a) => {
+            a.preload = "auto";
+          });
+
+          /* =========================
+             تعريف العناصر الأساسية
+          ========================= */
+
+          const dateBox = document.getElementById("dateBox");
+          const statusBox = document.getElementById("statusBox");
+          const overlay = document.getElementById("overlay");
+          const bgVideo = document.getElementById("bgVideo");
+          const fade = document.getElementById("athanWhiteFade");
+          const athanVideo = document.getElementById("athanVideo");
+          const athanAudio = document.getElementById("athanAudio");
+
+          /* منع أي فريم ظاهر قبل وقت الأذان */
+          athanVideo.pause();
+          athanVideo.currentTime = 0;
+
+          /* CLOCK */
+          const hour = document.querySelector(".hour");
+          const minute = document.querySelector(".minute");
+          const second = document.querySelector(".second");
+          const clock = document.querySelector(".clock");
+          const nums = [
+            "١",
+            "٢",
+            "٣",
+            "٤",
+            "٥",
+            "٦",
+            "٧",
+            "٨",
+            "٩",
+            "١٠",
+            "١١",
+            "١٢",
+          ];
+          for (let i = 1; i <= 12; i++) {
+            let n = document.createElement("div");
+            n.className = "number";
+            if ([3, 6, 9, 12].includes(i)) n.classList.add("bold");
+            n.textContent = nums[i - 1];
+            let angle = (i * 30 * Math.PI) / 180;
+            let r = 87;
+            n.style.left = 113 + r * Math.sin(angle) + "px";
+            n.style.top = 116 - r * Math.cos(angle) + "px";
+            clock.appendChild(n);
+          }
+          for (let i = 0; i < 60; i++) {
+            let t = document.createElement("div");
+            t.className = "tick" + (i % 5 ? " small" : "");
+            t.style.transform = `rotate(${i * 6}deg)`;
+            clock.appendChild(t);
+          }
+          function updateClock() {
+            let d = new Date();
+            hour.style.transform = `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() * 0.5}deg)`;
+            minute.style.transform = `rotate(${d.getMinutes() * 6}deg)`;
+            second.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
+          }
+          setInterval(updateClock, 1000);
+          updateClock();
+
+          /* DATE */
+          function toArabicDigits(s) {
+            return s.replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+          }
+          function updateDate() {
+            let d = new Date();
+            let days = [
+              "الأحد",
+              "الاثنين",
+              "الثلاثاء",
+              "الأربعاء",
+              "الخميس",
+              "الجمعة",
+              "السبت",
+            ];
+            let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }).format(d);
+            hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
+            let greg = new Intl.DateTimeFormat("ar-EG", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }).format(d);
+            dateBox.innerHTML = `
+                <div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
+                <div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
+                `;
+          }
+          updateDate();
+          setInterval(updateDate, 60000);
+
+          /* SCHEDULE */
+          function toMin(t) {
+            let [a, b] = t.split(":").map(Number);
+            return a * 60 + b;
+          }
+          const schedule = [
+            { name: "الحصة الأولى", start: "09:00", end: "09:35", gender: "f" },
+            { name: "الحصة الثانية", start: "09:35", end: "10:10", gender: "f" },
+            { name: "الحصة الثالثة", start: "10:10", end: "10:45", gender: "f" },
+            { name: "الحصة الرابعة", start: "10:45", end: "11:20", gender: "f" },
+            { name: "الحصة الخامسة", start: "11:20", end: "11:55", gender: "f" },
+            { name: "الحصة السادسة", start: "11:55", end: "12:30", gender: "f" },
+            { name: "أداء صلاة الظهر", start: "12:30", end: "12:45", gender: "m" },
+          ];
+
+          let lastEvent = "";
+
+          function getCurrent(c) {
+            return schedule.find((e) => c >= toMin(e.start) && c < toMin(e.end));
+          }
+
+          function getNextEvent(nowMinutes) {
+            return schedule.find((e) => nowMinutes < toMin(e.start));
+          }
+
+          function checkSchedule() {
+            let now = new Date();
+            let current = now.getHours() * 60 + now.getMinutes();
+            let currentEvent = getCurrent(current);
+            let currentName = currentEvent ? currentEvent.name : "";
+            let today = now.getDay();
+            let blocked = [5, 6]; // الجمعة والسبت
+
+            /* =========================
+               عرض الحصة الحالية
+            ========================= */
+
+            if (currentEvent) {
+              statusBox.style.display = "block";
+
+              const startMin = toMin(currentEvent.start);
+              const endMin = toMin(currentEvent.end);
+              const totalDuration = endMin - startMin;
+              const elapsed = current - startMin;
+              const remaining = endMin - current;
+              function formatRemainingMinutes(n) {
+                if (n === 1) return "متبقي دقيقة";
+
+                if (n === 2) return "متبقي دقيقتان";
+
+                if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
+
+                return `متبقي ${toArabicNumber(n)} دقيقة`;
+              }
+
+              const percent = Math.min((elapsed / totalDuration) * 100, 100);
+
+              function toArabicNumber(num) {
+                return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+              }
+
+              const isEndingSoon = remaining <= 5;
+
+              statusBox.innerHTML = `
+                <div>🟢 الآن ${currentEvent.name}</div>
+
+                <div class="status-time">
+                  <div class="time-row">
+
+                    <span class="time-text">
+                      ${toArabicNumber(currentEvent.start)}
+                    </span>
+
+                    <div class="progress-container-small">
+                      <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}"
+                           style="width:${percent}%"></div>
+                    </div>
+
+                    <span class="time-text">
+                      ${toArabicNumber(currentEvent.end)}
+                    </span>
+
+                  </div>
+
+                  <div class="remaining-time">
+            ${formatRemainingMinutes(remaining)}
+          </div>
+                </div>
+              `;
+            } else {
+              statusBox.style.display = "none";
+            }
+
+            /* =========================
+               تنبيه قبل البداية بـ 10 ثواني
+            ========================= */
+
+            const nowSeconds =
+              now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+            const nextEvent = getNextEvent(current);
+
+            if (nextEvent) {
+              const eventStartSeconds = toMin(nextEvent.start) * 60;
+
+              if (
+                nowSeconds >= eventStartSeconds - 10 &&
+                nowSeconds < eventStartSeconds &&
+                lastEvent !== nextEvent.name
+              ) {
+                if (!blocked.includes(today)) {
+                  const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
+
+                  overlay.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
+                      <span class="pulse-dot">🟢</span>
+                      <span>${verb} الآن ${nextEvent.name}</span>
+                    </div>
+                  `;
+
+                  overlay.classList.add("show");
+
+                  if (!athanActive) {
+                    const sound = lessonSounds[nextEvent.name];
+                    if (sound) {
+                      sound.currentTime = 0;
+                      sound.play().catch(() => {});
+                    }
+                  }
+
+                  setTimeout(() => {
+                    overlay.classList.remove("show");
+                  }, 12000);
+
+                  lastEvent = nextEvent.name;
+                }
+              }
+            }
+          }
+
+          setInterval(checkSchedule, 1000);
+          checkSchedule();
+
+          /* التحكم في فيديو المساء */
+          function controlNightVideo() {
+            const now = new Date();
+            const minutes = now.getHours() * 60 + now.getMinutes();
+
+            const start = 21 * 60 + 20; // 9:20 PM
+            const end = 24 * 60; // 12:00 AM
+
+            if (minutes >= start && minutes < end) {
+              bgVideo.style.opacity = "1";
+              bgVideo.play().catch(() => {});
+              slider.style.opacity = "0";
+            } else {
+              bgVideo.pause();
+              bgVideo.style.opacity = "0";
+              slider.style.opacity = "1";
+            }
+          }
+
+          /* SLIDER */
+          const slider = document.getElementById("slider");
+
+          const totalImages = 300;
+          let currentIndex = 1;
+
+          let img1 = document.createElement("img");
+          let img2 = document.createElement("img");
+
+          img1.className = "slide active";
+          img2.className = "slide";
+
+          slider.appendChild(img1);
+          slider.appendChild(img2);
+
+          function getImagePath(index) {
+            return `preimg/Slide${index}.JPG`;
+          }
+
+          img1.src = getImagePath(currentIndex);
+
+          function nextSlide() {
+            let nextIndex = currentIndex + 1;
+            if (nextIndex > totalImages) nextIndex = 1;
+
+            img2.src = getImagePath(nextIndex);
+
+            img2.onload = () => {
+              img2.classList.add("active");
+              img1.classList.remove("active");
+
+              // swap
+              [img1, img2] = [img2, img1];
+              currentIndex = nextIndex;
+            };
+          }
+
+          setInterval(nextSlide, 5000);
+
+          /* =========================
+             ONLINE ATHAN SYSTEM – UMM AL QURA API
+          ========================= */
+
+          const PRAYER_VIDEOS = {
+            Fajr: "video/P1.mp4",
+            Dhuhr: "video/P2.mp4",
+            Asr: "video/P3.mp4",
+            Maghrib: "video/P4.mp4",
+            Isha: "video/P5.mp4",
+          };
+
+          let athanPlayedKey = null;
+          let athanActive = false;
+          let lastFetchDate = null;
+
+          /* ===== تحويل وقت HH:MM إلى ثواني ===== */
+          function timeToSeconds(t) {
+            const [h, m] = t.split(":").map(Number);
+            return h * 3600 + m * 60;
+          }
+
+          /* ===== جلب أوقات الصلاة من الإنترنت ===== */
+          async function fetchPrayerTimes() {
+            try {
+              const today = new Date();
+              const day = today.getDate();
+              const month = today.getMonth() + 1;
+              const year = today.getFullYear();
+
+              const response = await fetch(
+                `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=25.9047&longitude=45.3566&method=4`,
+              );
+
+              const data = await response.json();
+              const timings = data.data.timings;
+
+              prayerTimes = {
+                Fajr: timeToSeconds(timings.Fajr),
+                Dhuhr: timeToSeconds(timings.Dhuhr),
+                Asr: timeToSeconds(timings.Asr),
+                Maghrib: timeToSeconds(timings.Maghrib),
+                Isha: timeToSeconds(timings.Isha),
+              };
+
+              lastFetchDate = today.toDateString();
+
+              console.log("تم تحديث أوقات الصلاة:", prayerTimes);
+            } catch (error) {
+              console.error("فشل جلب أوقات الصلاة:", error);
+            }
+          }
+
+          /* ===== تشغيل الأذان ===== */
+          function playAthan(prayerName) {
+            athanActive = true;
+
+            Object.values(lessonSounds).forEach((a) => {
+              a.pause();
+              a.currentTime = 0;
+            });
+
+            overlay.classList.remove("show");
+            bgVideo.pause();
+
+            // اخفي السلايدر تدريجياً
+            slider.style.transition = "opacity 1.2s ease";
+            slider.style.opacity = "0";
+
+            // شغّل الفيديو فورًا
+            athanVideo.src = PRAYER_VIDEOS[prayerName];
+            athanVideo.style.display = "block";
+            athanVideo.style.opacity = "0";
+            athanVideo.style.transition = "opacity 1.5s ease";
+
+
+      // لما الفيديو يبقى جاهز
+      athanVideo.onloadeddata = () => {
+        athanVideo.play().catch(() => {});
+        athanAudio.currentTime = 0;
+        athanAudio.play().catch(() => {});}
+
+    // fade in للفيديو نفسه
+    setTimeout(() => {
+      athanVideo.style.opacity = "1";
+    }, 100);
+  };
+
+            athanVideo.onended = function () {
+              // 1️⃣ نبدأ بإخفاء فيديو الأذان تدريجياً
+              athanVideo.style.transition = "opacity 1.5s ease";
+              athanVideo.style.opacity = "0";
+
+              // 2️⃣ نُظهر السلايدر تدريجياً
+              slider.style.transition = "opacity 1.5s ease";
+              slider.style.opacity = "1";
+
+              // 3️⃣ بعد انتهاء الفيد نُخفي الفيديو نهائياً
+              setTimeout(() => {
+                athanVideo.pause();
+                athanVideo.style.display = "none";
+                athanVideo.style.opacity = "1"; // إعادة تعيينه للمرات القادمة
+                athanActive = false;
+              }, 1500);
+            };
+
+
+          /* ===== فحص الأذان ===== */
+          function checkAthanOnline() {
+            const now = new Date();
+            const todayKey = now.toDateString();
+
+            if (lastFetchDate !== todayKey) {
+              fetchPrayerTimes();
+            }
+
+            if (!prayerTimes) return;
+
+            const nowSeconds =
+              now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+            for (const prayer in prayerTimes) {
+              if (
+                nowSeconds >= prayerTimes[prayer] &&
+                nowSeconds < prayerTimes[prayer] + 5 &&
+                athanPlayedKey !== prayer + todayKey &&
+                !athanActive
+              ) {
+                athanPlayedKey = prayer + todayKey;
+                playAthan(prayer);
+              }
+            }
+          }
+
+          let prayerTimes = null;
+
+          /* تشغيل أولي */
+          fetchPrayerTimes();
+          setInterval(checkAthanOnline, 1000);
+
+          /* ===============================
+             التحكم في فيديو الخلفية rc
+          ================================ */
+
+          function controlBackgroundVideo() {
+            const now = new Date();
+            const hour = now.getHours();
+
+            const bgVideo = document.getElementById("bgVideo");
+            const slider = document.getElementById("slider");
+
+            if (!bgVideo || !slider) return;
+
+            if (hour >= 21 && hour < 24) {
+              bgVideo.style.display = "block";
+              slider.style.display = "none";
+              bgVideo.play().catch(() => {});
+            } else {
+              bgVideo.pause();
+              bgVideo.style.display = "none";
+              slider.style.display = "block";
+            }
+          }
+
+          controlBackgroundVideo();
+          setInterval(controlBackgroundVideo, 60000);
+
+          setInterval(controlNightVideo, 1000);
+          controlNightVideo();
+
+          /* =========================
+                   LOADING SYSTEM
+                ========================= */
+
+          window.addEventListener("load", () => {
+            document.body.style.visibility = "visible";
+            const bgVideo = document.getElementById("bgVideo");
+
+            bgVideo.style.opacity = "1";
+            bgVideo.play().catch(() => {});
+
+            const loading = document.getElementById("loadingScreen");
+            const progressBar = document.getElementById("progressBar");
+            const progressText = document.getElementById("progressText");
+
+            const firstImagesCount = 5;
+
+            const audioFiles = [
+              "00.MP3",
+              "01.MP3",
+              "02.MP3",
+              "03.MP3",
+              "04.MP3",
+              "05.MP3",
+              "06.MP3",
+              "athan.MP3",
+            ];
+
+            let filesToLoad = [];
+            let loaded = 0;
+
+            /* أول 5 صور */
+            for (let i = 1; i <= firstImagesCount; i++) {
+              filesToLoad.push(`preimg/Slide${i}.JPG`);
+            }
+
+            filesToLoad.push("video/P1.mp4");
+            filesToLoad.push("video/P2.mp4");
+            filesToLoad.push("video/P3.mp4");
+            filesToLoad.push("video/P4.mp4");
+            filesToLoad.push("video/P5.mp4");
+
+            /* كل الأصوات */
+            audioFiles.forEach((file) => {
+              filesToLoad.push(`audio/${file}`);
+            });
+
+            const totalFiles = filesToLoad.length;
+
+            function updateProgress() {
+              loaded++;
+              const percent = Math.floor((loaded / totalFiles) * 100);
+
+              progressBar.style.width = percent + "%";
+              progressText.textContent = percent + "%";
+
+              if (loaded >= totalFiles) {
+                setTimeout(() => {
+                  loading.style.opacity = "0";
+                  setTimeout(() => {
+                    loading.style.display = "none";
+                  }, 800);
+                }, 400);
+              }
+            }
+
+            filesToLoad.forEach((src) => {
+              if (src.includes("preimg")) {
+                const img = new Image();
+                img.src = src;
+                img.onload = updateProgress;
+                img.onerror = updateProgress;
+              } else {
+                const audio = new Audio();
+                audio.src = src;
+                audio.preload = "auto";
+                audio.oncanplaythrough = updateProgress;
+                audio.onerror = updateProgress;
+              }
+            });
+          });
+    </script>
+  </body>
+</html>
