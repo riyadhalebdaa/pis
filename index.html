@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>School Display</title>
+    <title>School Display - Optimized</title>
 
     <style>
       * {
@@ -66,6 +66,7 @@
         z-index: 2000;
         opacity: 0;
         transition: opacity 1.2s ease;
+        display: none; /* مخفي افتراضياً */
       }
 
       /* SLIDER */
@@ -244,15 +245,9 @@
       }
 
       @keyframes pulseBar {
-        0% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.6;
-        }
-        100% {
-          opacity: 1;
-        }
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
       }
 
       .remaining-time {
@@ -312,18 +307,9 @@
       }
 
       @keyframes pulse {
-        0% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: scale(1.25);
-          opacity: 0.6;
-        }
-        100% {
-          transform: scale(1);
-          opacity: 1;
-        }
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.25); opacity: 0.6; }
+        100% { transform: scale(1); opacity: 1; }
       }
 
       #athanVideo {
@@ -347,7 +333,7 @@
     </style>
   </head>
   <body>
-    <video id="bgVideo" autoplay muted loop playsinline>
+    <video id="bgVideo" muted loop playsinline>
       <source src="video/rc.mp4" type="video/mp4" />
     </video>
 
@@ -372,6 +358,7 @@
     <div class="date-box" id="dateBox"></div>
     <div class="overlay" id="overlay"></div>
     <div id="athanWhiteFade"></div>
+
     <video
       id="athanVideo"
       playsinline
@@ -385,14 +372,12 @@
         z-index: 3000;
       "
     ></video>
-
     <audio id="athanAudio" src="audio/athan.MP3"></audio>
 
     <script>
-      /* =========================
-                   تجهيز أصوات الحصص
-                ========================= */
-
+      /* ========================================================
+         SETUP: SOUNDS & DOM ELEMENTS
+         ======================================================== */
       const lessonSounds = {
         "الحصة الأولى": new Audio("audio/00.MP3"),
         "الحصة الثانية": new Audio("audio/01.MP3"),
@@ -402,14 +387,8 @@
         "الحصة السادسة": new Audio("audio/05.MP3"),
         "أداء صلاة الظهر": new Audio("audio/06.MP3"),
       };
-
-      Object.values(lessonSounds).forEach((a) => {
-        a.preload = "auto";
-      });
-
-      /* =========================
-             تعريف العناصر الأساسية
-          ========================= */
+      // Preload Sounds
+      Object.values(lessonSounds).forEach((a) => { a.preload = "auto"; });
 
       const dateBox = document.getElementById("dateBox");
       const statusBox = document.getElementById("statusBox");
@@ -418,30 +397,16 @@
       const fade = document.getElementById("athanWhiteFade");
       const athanVideo = document.getElementById("athanVideo");
       const athanAudio = document.getElementById("athanAudio");
+      const slider = document.getElementById("slider");
 
-      /* منع أي فريم ظاهر قبل وقت الأذان */
-      athanVideo.pause();
-      athanVideo.currentTime = 0;
+      // Clock Elements
+      const hourEl = document.querySelector(".hour");
+      const minuteEl = document.querySelector(".minute");
+      const secondEl = document.querySelector(".second");
+      const clockEl = document.querySelector(".clock");
 
-      /* CLOCK */
-      const hour = document.querySelector(".hour");
-      const minute = document.querySelector(".minute");
-      const second = document.querySelector(".second");
-      const clock = document.querySelector(".clock");
-      const nums = [
-        "١",
-        "٢",
-        "٣",
-        "٤",
-        "٥",
-        "٦",
-        "٧",
-        "٨",
-        "٩",
-        "١٠",
-        "١١",
-        "١٢",
-      ];
+      /* Draw Clock Face */
+      const nums = ["١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩", "١٠", "١١", "١٢"];
       for (let i = 1; i <= 12; i++) {
         let n = document.createElement("div");
         n.className = "number";
@@ -451,62 +416,48 @@
         let r = 87;
         n.style.left = 113 + r * Math.sin(angle) + "px";
         n.style.top = 116 - r * Math.cos(angle) + "px";
-        clock.appendChild(n);
+        clockEl.appendChild(n);
       }
       for (let i = 0; i < 60; i++) {
         let t = document.createElement("div");
         t.className = "tick" + (i % 5 ? " small" : "");
         t.style.transform = `rotate(${i * 6}deg)`;
-        clock.appendChild(t);
+        clockEl.appendChild(t);
       }
-      function updateClock() {
-        let d = new Date();
-        hour.style.transform = `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() * 0.5}deg)`;
-        minute.style.transform = `rotate(${d.getMinutes() * 6}deg)`;
-        second.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
-      }
-      setInterval(updateClock, 1000);
-      updateClock();
 
-      /* DATE */
-      function toArabicDigits(s) {
-        return s.replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
-      }
-      function updateDate() {
-        let d = new Date();
-        let days = [
-          "الأحد",
-          "الاثنين",
-          "الثلاثاء",
-          "الأربعاء",
-          "الخميس",
-          "الجمعة",
-          "السبت",
-        ];
-        let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(d);
-        hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
-        let greg = new Intl.DateTimeFormat("ar-EG", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(d);
-        dateBox.innerHTML = `
-                <div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
-                <div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
-                `;
-      }
-      updateDate();
-      setInterval(updateDate, 60000);
+      /* ========================================================
+         SLIDER SETUP
+         ======================================================== */
+      const totalImages = 300;
+      let currentIndex = 1;
+      let img1 = document.createElement("img");
+      let img2 = document.createElement("img");
 
-      /* SCHEDULE */
-      function toMin(t) {
-        let [a, b] = t.split(":").map(Number);
-        return a * 60 + b;
+      img1.className = "slide active";
+      img2.className = "slide";
+      slider.appendChild(img1);
+      slider.appendChild(img2);
+
+      function getImagePath(index) {
+        return `preimg/Slide${index}.JPG`;
       }
+      img1.src = getImagePath(currentIndex);
+
+      function nextSlide() {
+        let nextIndex = currentIndex + 1;
+        if (nextIndex > totalImages) nextIndex = 1;
+        img2.src = getImagePath(nextIndex);
+        img2.onload = () => {
+          img2.classList.add("active");
+          img1.classList.remove("active");
+          [img1, img2] = [img2, img1]; // Swap
+          currentIndex = nextIndex;
+        };
+      }
+
+      /* ========================================================
+         DATA & HELPERS
+         ======================================================== */
       const schedule = [
         { name: "الحصة الأولى", start: "09:00", end: "09:35", gender: "f" },
         { name: "الحصة الثانية", start: "09:35", end: "10:10", gender: "f" },
@@ -517,205 +468,31 @@
         { name: "أداء صلاة الظهر", start: "12:30", end: "12:45", gender: "m" },
       ];
 
-      let lastEvent = "";
-
-      function getCurrent(c) {
-        return schedule.find((e) => c >= toMin(e.start) && c < toMin(e.end));
+      function toMin(t) {
+        let [a, b] = t.split(":").map(Number);
+        return a * 60 + b;
       }
-
-      function getNextEvent(nowMinutes) {
-        return schedule.find((e) => nowMinutes < toMin(e.start));
+      function toArabicDigits(s) {
+        return s.replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
       }
-
-      
       function toArabicNumber(num) {
-            return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
-          }
-      
+        return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+      }
       function formatTimeWithoutLeadingZero(timeStr) {
         let [h, m] = timeStr.split(":");
-
-        // نحول الساعة لرقم عشان يشيل الصفر تلقائيًا
         h = parseInt(h, 10);
-
         return h + ":" + m;
       }
 
-      function checkSchedule() {
-        let now = new Date();
-        let current = now.getHours() * 60 + now.getMinutes();
-        let currentEvent = getCurrent(current);
-        let currentName = currentEvent ? currentEvent.name : "";
-        let today = now.getDay();
-        let blocked = [5, 6]; // الجمعة والسبت
-
-        /* =========================
-               عرض الحصة الحالية
-            ========================= */
-
-        if (currentEvent) {
-          statusBox.style.display = "block";
-
-          const startMin = toMin(currentEvent.start);
-          const endMin = toMin(currentEvent.end);
-          const totalDuration = endMin - startMin;
-          const elapsed = current - startMin;
-          const remaining = endMin - current;
-          function formatRemainingMinutes(n) {
-            if (n === 1) return "متبقي دقيقة";
-
-            if (n === 2) return "متبقي دقيقتان";
-
-            if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
-
-            return `متبقي ${toArabicNumber(n)} دقيقة`;
-          }
-
-          const percent = Math.min((elapsed / totalDuration) * 100, 100);
-
-          const isEndingSoon = remaining <= 5;
-
-          statusBox.innerHTML = `
-                <div>🟢 الآن ${currentEvent.name}</div>
-
-                <div class="status-time">
-                  <div class="time-row">
-
-                    <span class="time-text">
-                      ${toArabicNumber(formatTimeWithoutLeadingZero(currentEvent.start))}
-                    </span>
-
-                    <div class="progress-container-small">
-                      <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}"
-                           style="width:${percent}%"></div>
-                    </div>
-
-                    <span class="time-text">
-                      ${toArabicNumber(formatTimeWithoutLeadingZero(currentEvent.end))}
-                    </span>
-
-                  </div>
-
-                  <div class="remaining-time">
-            ${formatRemainingMinutes(remaining)}
-          </div>
-                </div>
-              `;
-        } else {
-          statusBox.style.display = "none";
-        }
-
-        /* =========================
-               تنبيه قبل البداية بـ 10 ثواني
-            ========================= */
-
-        const nowSeconds =
-          now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-        const nextEvent = getNextEvent(current);
-
-        if (nextEvent) {
-          const eventStartSeconds = toMin(nextEvent.start) * 60;
-
-          if (
-            nowSeconds >= eventStartSeconds - 10 &&
-            nowSeconds < eventStartSeconds &&
-            lastEvent !== nextEvent.name
-          ) {
-            if (!blocked.includes(today)) {
-              const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
-
-              overlay.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
-                      <span class="pulse-dot">🟢</span>
-                      <span>${verb} الآن ${nextEvent.name}</span>
-                    </div>
-                  `;
-
-              overlay.classList.add("show");
-
-              if (!athanActive) {
-                const sound = lessonSounds[nextEvent.name];
-                if (sound) {
-                  sound.currentTime = 0;
-                  sound.play().catch(() => {});
-                }
-              }
-
-              setTimeout(() => {
-                overlay.classList.remove("show");
-              }, 12000);
-
-              lastEvent = nextEvent.name;
-            }
-          }
-        }
-      }
-
-      setInterval(checkSchedule, 1000);
-      checkSchedule();
-
-      /* التحكم في فيديو المساء */
-      function controlNightVideo() {
-        const now = new Date();
-        const minutes = now.getHours() * 60 + now.getMinutes();
-
-        const start = 21 * 60 + 20; // 9:20 PM
-        const end = 24 * 60; // 12:00 AM
-
-        if (minutes >= start && minutes < end) {
-          bgVideo.style.opacity = "1";
-          bgVideo.play().catch(() => {});
-          slider.style.opacity = "0";
-        } else {
-          bgVideo.pause();
-          bgVideo.style.opacity = "0";
-          slider.style.opacity = "1";
-        }
-      }
-
-      /* SLIDER */
-      const slider = document.getElementById("slider");
-
-      const totalImages = 300;
-      let currentIndex = 1;
-
-      let img1 = document.createElement("img");
-      let img2 = document.createElement("img");
-
-      img1.className = "slide active";
-      img2.className = "slide";
-
-      slider.appendChild(img1);
-      slider.appendChild(img2);
-
-      function getImagePath(index) {
-        return `preimg/Slide${index}.JPG`;
-      }
-
-      img1.src = getImagePath(currentIndex);
-
-      function nextSlide() {
-        let nextIndex = currentIndex + 1;
-        if (nextIndex > totalImages) nextIndex = 1;
-
-        img2.src = getImagePath(nextIndex);
-
-        img2.onload = () => {
-          img2.classList.add("active");
-          img1.classList.remove("active");
-
-          // swap
-          [img1, img2] = [img2, img1];
-          currentIndex = nextIndex;
-        };
-      }
-
-      setInterval(nextSlide, 5000);
-
-      /* =========================
-             ONLINE ATHAN SYSTEM – UMM AL QURA API
-          ========================= */
+      /* ========================================================
+         STATE VARIABLES
+         ======================================================== */
+      let lastEvent = "";
+      let sliderCounter = 0; // Counts seconds for slider
+      let athanActive = false;
+      let athanPlayedKey = null;
+      let lastFetchDate = null;
+      let prayerTimes = null;
 
       const PRAYER_VIDEOS = {
         Fajr: "video/P1.mp4",
@@ -725,30 +502,158 @@
         Isha: "video/P5.mp4",
       };
 
-      let athanPlayedKey = null;
-      let athanActive = false;
-      let lastFetchDate = null;
+      /* ========================================================
+         CORE FUNCTIONS (UPDATED TO ACCEPT 'now' DATE OBJECT)
+         ======================================================== */
 
-      /* ===== تحويل وقت HH:MM إلى ثواني ===== */
-      function timeToSeconds(t) {
-        const [h, m] = t.split(":").map(Number);
-        return h * 3600 + m * 60;
+      // 1. UPDATE CLOCK
+      function updateClock(d) {
+        hourEl.style.transform = `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() * 0.5}deg)`;
+        minuteEl.style.transform = `rotate(${d.getMinutes() * 6}deg)`;
+        secondEl.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
       }
 
-      /* ===== جلب أوقات الصلاة من الإنترنت ===== */
+      // 2. UPDATE DATE (Hijri & Gregorian)
+      function updateDate(d) {
+        let days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+          day: "numeric", month: "long", year: "numeric",
+        }).format(d);
+        hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
+        let greg = new Intl.DateTimeFormat("ar-EG", {
+          day: "numeric", month: "long", year: "numeric",
+        }).format(d);
+        
+        dateBox.innerHTML = `
+          <div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
+          <div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
+        `;
+      }
+
+      // 3. CHECK SCHEDULE
+      function checkSchedule(now) {
+        if (athanActive) return; // Don't show schedule alerts during Athan
+
+        let currentMinutes = now.getHours() * 60 + now.getMinutes();
+        let nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        let today = now.getDay();
+        let blocked = [5, 6]; // Friday, Saturday
+
+        // Find Current Event
+        let currentEvent = schedule.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+
+        if (currentEvent) {
+          statusBox.style.display = "block";
+          const startMin = toMin(currentEvent.start);
+          const endMin = toMin(currentEvent.end);
+          const totalDuration = endMin - startMin;
+          const elapsed = currentMinutes - startMin;
+          const remaining = endMin - currentMinutes;
+          
+          function formatRemainingMinutes(n) {
+            if (n === 1) return "متبقي دقيقة";
+            if (n === 2) return "متبقي دقيقتان";
+            if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
+            return `متبقي ${toArabicNumber(n)} دقيقة`;
+          }
+
+          const percent = Math.min((elapsed / totalDuration) * 100, 100);
+          const isEndingSoon = remaining <= 5;
+
+          statusBox.innerHTML = `
+            <div>🟢 الآن ${currentEvent.name}</div>
+            <div class="status-time">
+              <div class="time-row">
+                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(currentEvent.start))}</span>
+                <div class="progress-container-small">
+                  <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}" style="width:${percent}%"></div>
+                </div>
+                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(currentEvent.end))}</span>
+              </div>
+              <div class="remaining-time">${formatRemainingMinutes(remaining)}</div>
+            </div>
+          `;
+        } else {
+          statusBox.style.display = "none";
+        }
+
+        // Check for Next Event (Alert 10 seconds before)
+        let nextEvent = schedule.find((e) => currentMinutes < toMin(e.start));
+        if (nextEvent) {
+          const eventStartSeconds = toMin(nextEvent.start) * 60;
+          if (
+            nowSeconds >= eventStartSeconds - 10 &&
+            nowSeconds < eventStartSeconds &&
+            lastEvent !== nextEvent.name
+          ) {
+            if (!blocked.includes(today)) {
+              const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
+              overlay.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
+                  <span class="pulse-dot">🟢</span>
+                  <span>${verb} الآن ${nextEvent.name}</span>
+                </div>
+              `;
+              overlay.classList.add("show");
+              
+              const sound = lessonSounds[nextEvent.name];
+              if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
+              
+              setTimeout(() => { overlay.classList.remove("show"); }, 12000);
+              lastEvent = nextEvent.name;
+            }
+          }
+        }
+      }
+
+      // 4. NIGHT MODE CONTROL
+      function controlNightMode(now) {
+        if (athanActive) return; // Athan has priority
+
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const start = 21 * 60 + 20; // 9:20 PM
+        const end = 24 * 60;        // 12:00 AM
+
+        if (minutes >= start && minutes < end) {
+          // Night Mode Active
+          if (bgVideo.style.display !== "block") {
+             bgVideo.style.display = "block";
+             bgVideo.style.opacity = "1";
+             bgVideo.play().catch(() => {});
+             slider.style.opacity = "0";
+             setTimeout(() => { slider.style.display = "none"; }, 1200);
+          }
+        } else {
+          // Day Mode Active
+          if (bgVideo.style.display !== "none") {
+             bgVideo.style.opacity = "0";
+             bgVideo.pause();
+             bgVideo.style.display = "none";
+             slider.style.display = "block";
+             setTimeout(() => { slider.style.opacity = "1"; }, 100);
+          }
+        }
+      }
+
+      /* ========================================================
+         ATHAN SYSTEM
+         ======================================================== */
       async function fetchPrayerTimes() {
         try {
           const today = new Date();
           const day = today.getDate();
           const month = today.getMonth() + 1;
           const year = today.getFullYear();
-
           const response = await fetch(
             `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=25.9047&longitude=45.3566&method=4`,
           );
-
           const data = await response.json();
           const timings = data.data.timings;
+
+          function timeToSeconds(t) {
+            const [h, m] = t.split(":").map(Number);
+            return h * 3600 + m * 60;
+          }
 
           prayerTimes = {
             Fajr: timeToSeconds(timings.Fajr),
@@ -757,19 +662,16 @@
             Maghrib: timeToSeconds(timings.Maghrib),
             Isha: timeToSeconds(timings.Isha),
           };
-
           lastFetchDate = today.toDateString();
-
-          console.log("تم تحديث أوقات الصلاة:", prayerTimes);
         } catch (error) {
           console.error("فشل جلب أوقات الصلاة:", error);
         }
       }
 
-      /* ===== تشغيل الأذان ===== */
       function playAthan(prayerName) {
         athanActive = true;
 
+        // Pause other sounds
         Object.values(lessonSounds).forEach((a) => {
           a.pause();
           a.currentTime = 0;
@@ -777,62 +679,43 @@
 
         overlay.classList.remove("show");
         bgVideo.pause();
-
-        // اخفي السلايدر تدريجياً
         slider.style.transition = "opacity 1.2s ease";
         slider.style.opacity = "0";
 
-        // شغّل الفيديو فورًا
         athanVideo.src = PRAYER_VIDEOS[prayerName];
         athanVideo.style.display = "block";
         athanVideo.style.opacity = "0";
         athanVideo.style.transition = "opacity 1.5s ease";
 
-        // لما الفيديو يبقى جاهز
         athanVideo.onloadeddata = () => {
           athanVideo.play().catch(() => {});
           athanAudio.currentTime = 0;
           athanAudio.play().catch(() => {});
         };
 
-        // fade in للفيديو نفسه
-        setTimeout(() => {
-          athanVideo.style.opacity = "1";
-        }, 100);
+        setTimeout(() => { athanVideo.style.opacity = "1"; }, 100);
       }
 
       athanVideo.onended = function () {
-        // 1️⃣ نبدأ بإخفاء فيديو الأذان تدريجياً
         athanVideo.style.transition = "opacity 1.5s ease";
         athanVideo.style.opacity = "0";
-
-        // 2️⃣ نُظهر السلايدر تدريجياً
         slider.style.transition = "opacity 1.5s ease";
         slider.style.opacity = "1";
 
-        // 3️⃣ بعد انتهاء الفيد نُخفي الفيديو نهائياً
         setTimeout(() => {
           athanVideo.pause();
           athanVideo.style.display = "none";
-          athanVideo.style.opacity = "1"; // إعادة تعيينه للمرات القادمة
+          athanVideo.style.opacity = "1";
           athanActive = false;
         }, 1500);
       };
 
-      /* ===== فحص الأذان ===== */
-      function checkAthanOnline() {
-        const now = new Date();
+      function checkAthanOnline(now) {
         const todayKey = now.toDateString();
-
-        if (lastFetchDate !== todayKey) {
-          fetchPrayerTimes();
-        }
-
+        if (lastFetchDate !== todayKey) fetchPrayerTimes();
         if (!prayerTimes) return;
 
-        const nowSeconds =
-          now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
+        const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
         for (const prayer in prayerTimes) {
           if (
             nowSeconds >= prayerTimes[prayer] &&
@@ -846,51 +729,54 @@
         }
       }
 
-      let prayerTimes = null;
-
-      /* تشغيل أولي */
-      fetchPrayerTimes();
-      setInterval(checkAthanOnline, 1000);
-
-      /* ===============================
-             التحكم في فيديو الخلفية rc
-          ================================ */
-
-      function controlBackgroundVideo() {
+      /* ========================================================
+         MAIN LOOP (THE ONLY INTERVAL)
+         ======================================================== */
+      function mainLoop() {
         const now = new Date();
-        const hour = now.getHours();
+        const currentSeconds = now.getSeconds();
 
-        const bgVideo = document.getElementById("bgVideo");
-        const slider = document.getElementById("slider");
+        // 1. Clock (Every Second)
+        updateClock(now);
 
-        if (!bgVideo || !slider) return;
+        // 2. Schedule & Alerts (Every Second)
+        checkSchedule(now);
 
-        if (hour >= 21 && hour < 24) {
-          bgVideo.style.display = "block";
-          slider.style.display = "none";
-          bgVideo.play().catch(() => {});
-        } else {
-          bgVideo.pause();
-          bgVideo.style.display = "none";
-          slider.style.display = "block";
+        // 3. Athan Check (Every Second)
+        checkAthanOnline(now);
+
+        // 4. Night Mode Check (Every Second)
+        controlNightMode(now);
+
+        // 5. Date Update (Once per minute)
+        if (currentSeconds === 0) {
+          updateDate(now);
+        }
+
+        // 6. Slider Logic (Every 5 seconds, paused during Athan/Night Mode)
+        if (!athanActive && bgVideo.style.display !== "block") {
+            sliderCounter++;
+            if (sliderCounter >= 5) {
+                nextSlide();
+                sliderCounter = 0;
+            }
         }
       }
 
-      controlBackgroundVideo();
-      setInterval(controlBackgroundVideo, 60000);
+      // Initial Calls
+      fetchPrayerTimes();
+      updateDate(new Date()); 
+      
+      // Start Loop
+      setInterval(mainLoop, 1000);
 
-      setInterval(controlNightVideo, 1000);
-      controlNightVideo();
-
-      /* =========================
-                   LOADING SYSTEM
-                ========================= */
-
+      /* ========================================================
+         LOADING SCREEN LOGIC (ON WINDOW LOAD)
+         ======================================================== */
       window.addEventListener("load", () => {
         document.body.style.visibility = "visible";
-        const bgVideo = document.getElementById("bgVideo");
-
-        bgVideo.style.opacity = "1";
+        
+        // Try playing BG video if permitted (often blocked by browser policy without user interaction)
         bgVideo.play().catch(() => {});
 
         const loading = document.getElementById("loadingScreen");
@@ -898,52 +784,32 @@
         const progressText = document.getElementById("progressText");
 
         const firstImagesCount = 5;
-
         const audioFiles = [
-          "00.MP3",
-          "01.MP3",
-          "02.MP3",
-          "03.MP3",
-          "04.MP3",
-          "05.MP3",
-          "06.MP3",
-          "athan.MP3",
+          "00.MP3", "01.MP3", "02.MP3", "03.MP3", 
+          "04.MP3", "05.MP3", "06.MP3", "athan.MP3",
         ];
 
         let filesToLoad = [];
         let loaded = 0;
 
-        /* أول 5 صور */
         for (let i = 1; i <= firstImagesCount; i++) {
           filesToLoad.push(`preimg/Slide${i}.JPG`);
         }
-
-        filesToLoad.push("video/P1.mp4");
-        filesToLoad.push("video/P2.mp4");
-        filesToLoad.push("video/P3.mp4");
-        filesToLoad.push("video/P4.mp4");
-        filesToLoad.push("video/P5.mp4");
-
-        /* كل الأصوات */
-        audioFiles.forEach((file) => {
-          filesToLoad.push(`audio/${file}`);
-        });
+        filesToLoad.push("video/P1.mp4", "video/P2.mp4", "video/P3.mp4", "video/P4.mp4", "video/P5.mp4");
+        audioFiles.forEach((file) => { filesToLoad.push(`audio/${file}`); });
 
         const totalFiles = filesToLoad.length;
 
         function updateProgress() {
           loaded++;
           const percent = Math.floor((loaded / totalFiles) * 100);
-
           progressBar.style.width = percent + "%";
           progressText.textContent = percent + "%";
 
           if (loaded >= totalFiles) {
             setTimeout(() => {
               loading.style.opacity = "0";
-              setTimeout(() => {
-                loading.style.display = "none";
-              }, 800);
+              setTimeout(() => { loading.style.display = "none"; }, 800);
             }, 400);
           }
         }
@@ -959,7 +825,7 @@
             audio.src = src;
             audio.preload = "auto";
             audio.oncanplaythrough = updateProgress;
-            audio.onerror = updateProgress;
+            audio.onerror = updateProgress; // Handle missing files gracefully
           }
         });
       });
