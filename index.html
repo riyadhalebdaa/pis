@@ -66,7 +66,7 @@
         z-index: 2000;
         opacity: 0;
         transition: opacity 1.2s ease;
-        display: none; /* مخفي افتراضياً */
+        display: none;
       }
 
       /* SLIDER */
@@ -190,21 +190,36 @@
         background: #555;
       }
 
-      /* STATUS */
-      .status {
+      /* STATUS CONTAINER (NEW DUAL LAYOUT) */
+      .status-container {
         position: absolute;
         bottom: 40px;
         right: 40px;
+        display: flex;
+        gap: 20px;
+        z-index: 5000;
+        direction: rtl;
+      }
+
+      .status {
         background: rgba(255, 255, 255, 0.95);
-        padding: 18px 35px;
+        padding: 18px 25px;
         border-radius: 15px;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: bold;
         text-align: center;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         display: none;
-        direction: rtl;
-        z-index: 5000;
+        width: 260px;
+      }
+
+      .status-title {
+        font-size: 16px;
+        color: #00c853;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 6px;
+        font-weight: 900;
       }
 
       .status-time {
@@ -234,9 +249,7 @@
         height: 100%;
         width: 0%;
         background: #00c853;
-        transition:
-          width 1s linear,
-          background 0.3s;
+        transition: width 1s linear, background 0.3s;
       }
 
       .progress-bar-small.ending {
@@ -289,7 +302,7 @@
         justify-content: center;
         align-items: center;
         color: #fff;
-        font-size: 46px;
+        font-size: 42px;
         font-weight: bold;
         opacity: 0;
         visibility: hidden;
@@ -354,7 +367,11 @@
       <div class="center"></div>
     </div>
 
-    <div class="status" id="statusBox"></div>
+    <div class="status-container">
+      <div class="status" id="statusBoxUpper"></div>
+      <div class="status" id="statusBoxPrimary"></div>
+    </div>
+
     <div class="date-box" id="dateBox"></div>
     <div class="overlay" id="overlay"></div>
     <div id="athanWhiteFade"></div>
@@ -379,19 +396,30 @@
          SETUP: SOUNDS & DOM ELEMENTS
          ======================================================== */
       const lessonSounds = {
-        "الحصة الأولى": new Audio("audio/00.MP3"),
-        "الحصة الثانية": new Audio("audio/01.MP3"),
-        "الحصة الثالثة": new Audio("audio/02.MP3"),
-        "الحصة الرابعة": new Audio("audio/03.MP3"),
-        "الحصة الخامسة": new Audio("audio/04.MP3"),
-        "الحصة السادسة": new Audio("audio/05.MP3"),
-        "أداء صلاة الظهر": new Audio("audio/06.MP3"),
+        "الاصطفاف الصباحي": new Audio("audio/00.MP3"),
+        "الحصة الأولى": new Audio("audio/01.MP3"),
+        "الحصة الثانية": new Audio("audio/02.MP3"),
+        "الحصة الثالثة": new Audio("audio/03.MP3"),
+        "الحصة الرابعة": new Audio("audio/04.MP3"),
+        "الحصة الخامسة": new Audio("audio/05.MP3"),
+        "الحصة السادسة": new Audio("audio/06.MP3"),
+        "الحصة السابعة": new Audio("audio/07.MP3"),
+        "الفسحة الأولى": new Audio("audio/08.MP3"),
+        "الفسحة الثانية": new Audio("audio/09.MP3"),
+        "الخروج": new Audio("audio/10.MP3")
       };
+      
+      // Load remaining audio files (11 to 13) into cache just in case
+      for(let i=11; i<=13; i++) {
+         lessonSounds["Extra"+i] = new Audio(`audio/${i}.MP3`);
+      }
+
       // Preload Sounds
       Object.values(lessonSounds).forEach((a) => { a.preload = "auto"; });
 
       const dateBox = document.getElementById("dateBox");
-      const statusBox = document.getElementById("statusBox");
+      const statusBoxPrimary = document.getElementById("statusBoxPrimary");
+      const statusBoxUpper = document.getElementById("statusBoxUpper");
       const overlay = document.getElementById("overlay");
       const bgVideo = document.getElementById("bgVideo");
       const fade = document.getElementById("athanWhiteFade");
@@ -456,18 +484,58 @@
       }
 
       /* ========================================================
-         DATA & HELPERS
+         DATA: DUAL SCHEDULES
          ======================================================== */
-      const schedule = [
-        { name: "الحصة الأولى", start: "09:00", end: "09:35", gender: "f" },
-        { name: "الحصة الثانية", start: "09:35", end: "10:10", gender: "f" },
-        { name: "الحصة الثالثة", start: "10:10", end: "10:45", gender: "f" },
-        { name: "الحصة الرابعة", start: "10:45", end: "11:20", gender: "f" },
-        { name: "الحصة الخامسة", start: "11:20", end: "11:55", gender: "f" },
-        { name: "الحصة السادسة", start: "11:55", end: "12:30", gender: "f" },
-        { name: "أداء صلاة الظهر", start: "12:30", end: "12:45", gender: "m" },
+      const schedPrimaryReg = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
+        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
+        { name: "الفسحة الأولى", start: "08:00", end: "08:20" },
+        { name: "الحصة الثالثة", start: "08:20", end: "09:05" },
+        { name: "الحصة الرابعة", start: "09:05", end: "09:45" },
+        { name: "الفسحة الثانية", start: "09:45", end: "10:05" },
+        { name: "الحصة الخامسة", start: "10:05", end: "10:45" },
+        { name: "الحصة السادسة", start: "10:45", end: "11:20" }
       ];
 
+      const schedUpperReg = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
+        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
+        { name: "الحصة الثالثة", start: "08:00", end: "08:45" },
+        { name: "الفسحة الأولى", start: "08:45", end: "09:05" },
+        { name: "الحصة الرابعة", start: "09:05", end: "09:45" },
+        { name: "الحصة الخامسة", start: "09:45", end: "10:25" },
+        { name: "الفسحة الثانية", start: "10:25", end: "10:45" },
+        { name: "الحصة السادسة", start: "10:45", end: "11:25" }
+      ];
+
+      const schedPrimaryWed = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
+        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
+        { name: "الفسحة الأولى", start: "08:00", end: "08:15" },
+        { name: "الحصة الثالثة", start: "08:15", end: "08:55" },
+        { name: "الحصة الرابعة", start: "08:55", end: "09:30" },
+        { name: "الفسحة الثانية", start: "09:30", end: "09:45" },
+        { name: "الحصة الخامسة", start: "09:45", end: "10:20" },
+        { name: "الحصة السادسة", start: "10:20", end: "10:50" },
+        { name: "الحصة السابعة", start: "10:50", end: "11:20" }
+      ];
+
+      const schedUpperWed = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
+        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
+        { name: "الحصة الثالثة", start: "08:00", end: "08:40" },
+        { name: "الفسحة الأولى", start: "08:40", end: "08:55" },
+        { name: "الحصة الرابعة", start: "08:55", end: "09:30" },
+        { name: "الحصة الخامسة", start: "09:30", end: "10:05" },
+        { name: "الفسحة الثانية", start: "10:05", end: "10:20" },
+        { name: "الحصة السادسة", start: "10:20", end: "10:50" }
+      ];
+
+      /* HELPERS */
       function toMin(t) {
         let [a, b] = t.split(":").map(Number);
         return a * 60 + b;
@@ -483,12 +551,18 @@
         h = parseInt(h, 10);
         return h + ":" + m;
       }
+      function formatRemainingMinutes(n) {
+        if (n === 1) return "متبقي دقيقة";
+        if (n === 2) return "متبقي دقيقتان";
+        if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
+        return `متبقي ${toArabicNumber(n)} دقيقة`;
+      }
 
       /* ========================================================
          STATE VARIABLES
          ======================================================== */
-      let lastEvent = "";
-      let sliderCounter = 0; // Counts seconds for slider
+      let lastEventAlertId = "";
+      let sliderCounter = 0;
       let athanActive = false;
       let athanPlayedKey = null;
       let lastFetchDate = null;
@@ -503,7 +577,7 @@
       };
 
       /* ========================================================
-         CORE FUNCTIONS (UPDATED TO ACCEPT 'now' DATE OBJECT)
+         CORE FUNCTIONS
          ======================================================== */
 
       // 1. UPDATE CLOCK
@@ -513,7 +587,7 @@
         secondEl.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
       }
 
-      // 2. UPDATE DATE (Hijri & Gregorian)
+      // 2. UPDATE DATE
       function updateDate(d) {
         let days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
@@ -530,92 +604,118 @@
         `;
       }
 
-      // 3. CHECK SCHEDULE
+      // 3. RENDER STATUS BOX
+      function renderStatusBox(boxElement, eventData, title, currentMinutes) {
+        if (eventData) {
+          boxElement.style.display = "block";
+          const startMin = toMin(eventData.start);
+          const endMin = toMin(eventData.end);
+          const totalDuration = endMin - startMin;
+          const elapsed = currentMinutes - startMin;
+          const remaining = endMin - currentMinutes;
+          
+          const percent = Math.min((elapsed / totalDuration) * 100, 100);
+          const isEndingSoon = remaining <= 5;
+
+          boxElement.innerHTML = `
+            <div class="status-title">${title}</div>
+            <div>🟢 الآن ${eventData.name}</div>
+            <div class="status-time">
+              <div class="time-row">
+                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(eventData.start))}</span>
+                <div class="progress-container-small">
+                  <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}" style="width:${percent}%"></div>
+                </div>
+                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(eventData.end))}</span>
+              </div>
+              <div class="remaining-time">${formatRemainingMinutes(remaining)}</div>
+            </div>
+          `;
+        } else {
+          boxElement.style.display = "none";
+        }
+      }
+
+      // 4. CHECK SCHEDULE
       function checkSchedule(now) {
-        if (athanActive) return; // Don't show schedule alerts during Athan
+        if (athanActive) return;
 
         let currentMinutes = now.getHours() * 60 + now.getMinutes();
         let nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
         let today = now.getDay();
         let blocked = [5, 6]; // Friday, Saturday
 
-        // Find Current Event
-        let currentEvent = schedule.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+        // Determine correct schedule based on Day (3 is Wednesday)
+        let isWednesday = (today === 3);
+        let currentPrimarySched = isWednesday ? schedPrimaryWed : schedPrimaryReg;
+        let currentUpperSched = isWednesday ? schedUpperWed : schedUpperReg;
 
-        if (currentEvent) {
-          statusBox.style.display = "block";
-          const startMin = toMin(currentEvent.start);
-          const endMin = toMin(currentEvent.end);
-          const totalDuration = endMin - startMin;
-          const elapsed = currentMinutes - startMin;
-          const remaining = endMin - currentMinutes;
+        // Current Events
+        let currentPrimary = currentPrimarySched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+        let currentUpper = currentUpperSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+
+        // Render Boxes
+        renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", currentMinutes);
+        renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", currentMinutes);
+
+        // Alert Logic (10 seconds before start)
+        if (!blocked.includes(today)) {
+          let upcomingPrimary = currentPrimarySched.find((e) => currentMinutes < toMin(e.start));
+          let upcomingUpper = currentUpperSched.find((e) => currentMinutes < toMin(e.start));
+
+          let eventsToAlert = [];
+
+          const isStartingIn10Sec = (ev) => {
+             const eventStartSec = toMin(ev.start) * 60;
+             return (nowSeconds >= eventStartSec - 10 && nowSeconds < eventStartSec);
+          };
+
+          if (upcomingPrimary && isStartingIn10Sec(upcomingPrimary)) {
+              eventsToAlert.push({ name: upcomingPrimary.name, target: "للصفوف الأولية" });
+          }
           
-          function formatRemainingMinutes(n) {
-            if (n === 1) return "متبقي دقيقة";
-            if (n === 2) return "متبقي دقيقتان";
-            if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
-            return `متبقي ${toArabicNumber(n)} دقيقة`;
+          if (upcomingUpper && isStartingIn10Sec(upcomingUpper)) {
+              let duplicate = eventsToAlert.find(e => e.name === upcomingUpper.name);
+              if (duplicate) {
+                  duplicate.target = "للمرحلتين"; // Merge alert if same period starts at same time
+              } else {
+                  eventsToAlert.push({ name: upcomingUpper.name, target: "للصفوف العليا" });
+              }
           }
 
-          const percent = Math.min((elapsed / totalDuration) * 100, 100);
-          const isEndingSoon = remaining <= 5;
+          eventsToAlert.forEach(ev => {
+             let alertId = ev.name + "-" + ev.target + "-" + nowSeconds;
+             if(lastEventAlertId !== alertId) {
+                 lastEventAlertId = alertId;
+                 
+                 const verb = ev.name.includes("الاصطفاف") ? "يبدأ" : "تبدأ";
+                 const targetText = ev.target === "للمرحلتين" ? "" : ` (${ev.target})`;
 
-          statusBox.innerHTML = `
-            <div>🟢 الآن ${currentEvent.name}</div>
-            <div class="status-time">
-              <div class="time-row">
-                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(currentEvent.start))}</span>
-                <div class="progress-container-small">
-                  <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}" style="width:${percent}%"></div>
-                </div>
-                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(currentEvent.end))}</span>
-              </div>
-              <div class="remaining-time">${formatRemainingMinutes(remaining)}</div>
-            </div>
-          `;
-        } else {
-          statusBox.style.display = "none";
-        }
-
-        // Check for Next Event (Alert 10 seconds before)
-        let nextEvent = schedule.find((e) => currentMinutes < toMin(e.start));
-        if (nextEvent) {
-          const eventStartSeconds = toMin(nextEvent.start) * 60;
-          if (
-            nowSeconds >= eventStartSeconds - 10 &&
-            nowSeconds < eventStartSeconds &&
-            lastEvent !== nextEvent.name
-          ) {
-            if (!blocked.includes(today)) {
-              const verb = nextEvent.gender === "f" ? "تبدأ" : "يبدأ";
-              overlay.innerHTML = `
-                <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
-                  <span class="pulse-dot">🟢</span>
-                  <span>${verb} الآن ${nextEvent.name}</span>
-                </div>
-              `;
-              overlay.classList.add("show");
-              
-              const sound = lessonSounds[nextEvent.name];
-              if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
-              
-              setTimeout(() => { overlay.classList.remove("show"); }, 12000);
-              lastEvent = nextEvent.name;
-            }
-          }
+                 overlay.innerHTML = `
+                  <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
+                    <span class="pulse-dot">🟢</span>
+                    <span>${verb} الآن ${ev.name}${targetText}</span>
+                  </div>
+                 `;
+                 overlay.classList.add("show");
+                 
+                 const sound = lessonSounds[ev.name];
+                 if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
+                 
+                 setTimeout(() => { overlay.classList.remove("show"); }, 12000);
+             }
+          });
         }
       }
 
-      // 4. NIGHT MODE CONTROL
+      // 5. NIGHT MODE
       function controlNightMode(now) {
-        if (athanActive) return; // Athan has priority
-
+        if (athanActive) return;
         const minutes = now.getHours() * 60 + now.getMinutes();
         const start = 21 * 60 + 20; // 9:20 PM
         const end = 24 * 60;        // 12:00 AM
 
         if (minutes >= start && minutes < end) {
-          // Night Mode Active
           if (bgVideo.style.display !== "block") {
              bgVideo.style.display = "block";
              bgVideo.style.opacity = "1";
@@ -624,7 +724,6 @@
              setTimeout(() => { slider.style.display = "none"; }, 1200);
           }
         } else {
-          // Day Mode Active
           if (bgVideo.style.display !== "none") {
              bgVideo.style.opacity = "0";
              bgVideo.pause();
@@ -670,11 +769,8 @@
 
       function playAthan(prayerName) {
         athanActive = true;
-
-        // Pause other sounds
         Object.values(lessonSounds).forEach((a) => {
-          a.pause();
-          a.currentTime = 0;
+          a.pause(); a.currentTime = 0;
         });
 
         overlay.classList.remove("show");
@@ -730,30 +826,21 @@
       }
 
       /* ========================================================
-         MAIN LOOP (THE ONLY INTERVAL)
+         MAIN LOOP
          ======================================================== */
       function mainLoop() {
         const now = new Date();
         const currentSeconds = now.getSeconds();
 
-        // 1. Clock (Every Second)
         updateClock(now);
-
-        // 2. Schedule & Alerts (Every Second)
         checkSchedule(now);
-
-        // 3. Athan Check (Every Second)
         checkAthanOnline(now);
-
-        // 4. Night Mode Check (Every Second)
         controlNightMode(now);
 
-        // 5. Date Update (Once per minute)
         if (currentSeconds === 0) {
           updateDate(now);
         }
 
-        // 6. Slider Logic (Every 5 seconds, paused during Athan/Night Mode)
         if (!athanActive && bgVideo.style.display !== "block") {
             sliderCounter++;
             if (sliderCounter >= 5) {
@@ -763,20 +850,15 @@
         }
       }
 
-      // Initial Calls
       fetchPrayerTimes();
       updateDate(new Date()); 
-      
-      // Start Loop
       setInterval(mainLoop, 1000);
 
       /* ========================================================
-         LOADING SCREEN LOGIC (ON WINDOW LOAD)
+         LOADING SCREEN LOGIC
          ======================================================== */
       window.addEventListener("load", () => {
         document.body.style.visibility = "visible";
-        
-        // Try playing BG video if permitted (often blocked by browser policy without user interaction)
         bgVideo.play().catch(() => {});
 
         const loading = document.getElementById("loadingScreen");
@@ -784,11 +866,6 @@
         const progressText = document.getElementById("progressText");
 
         const firstImagesCount = 5;
-        const audioFiles = [
-          "00.MP3", "01.MP3", "02.MP3", "03.MP3", 
-          "04.MP3", "05.MP3", "06.MP3", "athan.MP3",
-        ];
-
         let filesToLoad = [];
         let loaded = 0;
 
@@ -796,7 +873,13 @@
           filesToLoad.push(`preimg/Slide${i}.JPG`);
         }
         filesToLoad.push("video/P1.mp4", "video/P2.mp4", "video/P3.mp4", "video/P4.mp4", "video/P5.mp4");
-        audioFiles.forEach((file) => { filesToLoad.push(`audio/${file}`); });
+        
+        // Dynamically add all audio files to preload queue
+        for(let i=0; i<=13; i++) {
+            let numStr = i < 10 ? "0"+i : ""+i;
+            filesToLoad.push(`audio/${numStr}.MP3`);
+        }
+        filesToLoad.push("audio/athan.MP3");
 
         const totalFiles = filesToLoad.length;
 
@@ -825,7 +908,7 @@
             audio.src = src;
             audio.preload = "auto";
             audio.oncanplaythrough = updateProgress;
-            audio.onerror = updateProgress; // Handle missing files gracefully
+            audio.onerror = updateProgress; 
           }
         });
       });
