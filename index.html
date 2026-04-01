@@ -190,7 +190,7 @@
         background: #555;
       }
 
-      /* STATUS CONTAINER (NEW DUAL LAYOUT) */
+      /* STATUS CONTAINER */
       .status-container {
         position: absolute;
         bottom: 40px;
@@ -215,7 +215,6 @@
 
       .status-title {
         font-size: 16px;
-        color: #00c853;
         margin-bottom: 8px;
         border-bottom: 2px solid #eee;
         padding-bottom: 6px;
@@ -297,32 +296,25 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.65);
+        background: rgba(0, 0, 0, 0.75);
         display: flex;
         justify-content: center;
         align-items: center;
         color: #fff;
-        font-size: 42px;
+        font-size: 44px;
         font-weight: bold;
+        line-height: 1.8;
+        text-align: center;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.6s ease;
         z-index: 6000;
+        direction: rtl;
+        padding: 40px;
       }
       .overlay.show {
         opacity: 1;
         visibility: visible;
-      }
-
-      .pulse-dot {
-        font-size: 50px;
-        animation: pulse 1.5s infinite;
-      }
-
-      @keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.25); opacity: 0.6; }
-        100% { transform: scale(1); opacity: 1; }
       }
 
       #athanVideo {
@@ -368,61 +360,38 @@
     </div>
 
     <div class="status-container">
-      <div class="status" id="statusBoxUpper"></div>
       <div class="status" id="statusBoxPrimary"></div>
+      <div class="status" id="statusBoxUpper"></div>
     </div>
 
     <div class="date-box" id="dateBox"></div>
     <div class="overlay" id="overlay"></div>
     <div id="athanWhiteFade"></div>
 
-    <video
-      id="athanVideo"
-      playsinline
-      style="
-        display: none;
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 3000;
-      "
-    ></video>
+    <video id="athanVideo" playsinline></video>
     <audio id="athanAudio" src="audio/athan.MP3"></audio>
 
     <script>
       /* ========================================================
+         CONFIGURATION
+         ======================================================== */
+      const ENABLE_NIGHT_MODE = false;
+
+      /* ========================================================
          SETUP: SOUNDS & DOM ELEMENTS
          ======================================================== */
-      const lessonSounds = {
-        "الاصطفاف الصباحي": new Audio("audio/00.MP3"),
-        "الحصة الأولى": new Audio("audio/01.MP3"),
-        "الحصة الثانية": new Audio("audio/02.MP3"),
-        "الحصة الثالثة": new Audio("audio/03.MP3"),
-        "الحصة الرابعة": new Audio("audio/04.MP3"),
-        "الحصة الخامسة": new Audio("audio/05.MP3"),
-        "الحصة السادسة": new Audio("audio/06.MP3"),
-        "الحصة السابعة": new Audio("audio/07.MP3"),
-        "الفسحة الأولى": new Audio("audio/08.MP3"),
-        "الفسحة الثانية": new Audio("audio/09.MP3"),
-        "الخروج": new Audio("audio/10.MP3")
-      };
-      
-      // Load remaining audio files (11 to 13) into cache just in case
-      for(let i=11; i<=13; i++) {
-         lessonSounds["Extra"+i] = new Audio(`audio/${i}.MP3`);
+      const audioFiles = {};
+      for (let i = 0; i <= 13; i++) {
+        let key = i < 10 ? "0" + i : i.toString();
+        audioFiles[key] = new Audio(`audio/${key}.MP3`);
+        audioFiles[key].preload = "auto";
       }
-
-      // Preload Sounds
-      Object.values(lessonSounds).forEach((a) => { a.preload = "auto"; });
 
       const dateBox = document.getElementById("dateBox");
       const statusBoxPrimary = document.getElementById("statusBoxPrimary");
       const statusBoxUpper = document.getElementById("statusBoxUpper");
       const overlay = document.getElementById("overlay");
       const bgVideo = document.getElementById("bgVideo");
-      const fade = document.getElementById("athanWhiteFade");
       const athanVideo = document.getElementById("athanVideo");
       const athanAudio = document.getElementById("athanAudio");
       const slider = document.getElementById("slider");
@@ -478,13 +447,13 @@
         img2.onload = () => {
           img2.classList.add("active");
           img1.classList.remove("active");
-          [img1, img2] = [img2, img1]; // Swap
+          [img1, img2] = [img2, img1];
           currentIndex = nextIndex;
         };
       }
 
       /* ========================================================
-         DATA: DUAL SCHEDULES
+         DATA: DUAL SCHEDULES (For Status Boxes Only)
          ======================================================== */
       const schedPrimaryReg = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
@@ -510,7 +479,7 @@
         { name: "الحصة السادسة", start: "10:45", end: "11:25" }
       ];
 
-      const schedPrimaryWed = [
+      const schedPrimaryWedThu = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
         { name: "الحصة الأولى", start: "06:30", end: "07:15" },
         { name: "الحصة الثانية", start: "07:15", end: "08:00" },
@@ -523,7 +492,7 @@
         { name: "الحصة السابعة", start: "10:50", end: "11:20" }
       ];
 
-      const schedUpperWed = [
+      const schedUpperWedThu = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
         { name: "الحصة الأولى", start: "06:30", end: "07:15" },
         { name: "الحصة الثانية", start: "07:15", end: "08:00" },
@@ -534,6 +503,43 @@
         { name: "الفسحة الثانية", start: "10:05", end: "10:20" },
         { name: "الحصة السادسة", start: "10:20", end: "10:50" }
       ];
+
+      /* ========================================================
+         DATA: CUSTOM ALERTS (TRANSITIONS)
+         ======================================================== */
+      const alertsSunTue = [
+        { time: "06:15", advance: 10, duration: 10, audio: "00", text: "🟠 الاصطفاف الصباحي 🟡" },
+        { time: "06:30", advance: 7, duration: 7, audio: "01", text: "🟠 تبدأ الآن الحصة الأولى 🟡" },
+        { time: "07:15", advance: 10, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
+        { time: "08:00", advance: 15, duration: 15, audio: "03", text: "انتهت الحصة الثانية<br>🟠 وتبدأ الآن الفسحة الأولى للصفوف الأولية<br>🟡 والحصة الثالثة للصفوف العليا" },
+        { time: "08:20", advance: 12, duration: 12, audio: "04", text: "🟠 انتهت الفسحة الأولى للصفوف الأولية، وتبدأ الآن الحصة الثالثة" },
+        { time: "08:45", advance: 12, duration: 12, audio: "05", text: "🟡 انتهت الحصة الثالثة للصفوف العليا، وتبدأ الآن الفسحة الأولى" },
+        { time: "09:05", advance: 10, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
+        { time: "09:45", advance: 15, duration: 15, audio: "07", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية للصفوف الأولية<br>🟡 والحصة الخامسة للصفوف العليا" },
+        { time: "10:05", advance: 12, duration: 12, audio: "08", text: "🟠 انتهت الفسحة الثانية للصفوف الأولية، وتبدأ الآن الحصة الخامسة" },
+        { time: "10:25", advance: 12, duration: 12, audio: "09", text: "🟡 انتهت الحصة الخامسة للصفوف العليا، وتبدأ الآن الفسحة الثانية" },
+        { time: "10:45", advance: 12, duration: 12, audio: "11", text: "🟠 تبدأ الآن الحصة السادسة 🟡" },
+        { time: "11:20", advance: 10, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
+        { time: "11:25", advance: 10, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
+      ];
+
+      const alertsWedThu = [
+        { time: "06:15", advance: 10, duration: 10, audio: "00", text: "🟠 الاصطفاف الصباحي 🟡" },
+        { time: "06:30", advance: 7, duration: 7, audio: "01", text: "🟠 تبدأ الآن الحصة الأولى 🟡" },
+        { time: "07:15", advance: 10, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
+        { time: "08:00", advance: 15, duration: 15, audio: "03", text: "انتهت الحصة الثانية<br>🟠 وتبدأ الآن الفسحة الأولى للصفوف الأولية<br>🟡 والحصة الثالثة للصفوف العليا" },
+        { time: "08:15", advance: 12, duration: 12, audio: "04", text: "🟠 انتهت الفسحة الأولى للصفوف الأولية، وتبدأ الآن الحصة الثالثة" },
+        { time: "08:40", advance: 12, duration: 12, audio: "05", text: "🟡 انتهت الحصة الثالثة للصفوف العليا، وتبدأ الآن الفسحة الأولى" },
+        { time: "08:55", advance: 10, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
+        { time: "09:30", advance: 15, duration: 15, audio: "07", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية للصفوف الأولية<br>🟡 والحصة الخامسة للصفوف العليا" },
+        { time: "09:45", advance: 12, duration: 12, audio: "08", text: "🟠 انتهت الفسحة الثانية للصفوف الأولية، وتبدأ الآن الحصة الخامسة" },
+        { time: "10:05", advance: 12, duration: 12, audio: "09", text: "🟡 انتهت الحصة الخامسة للصفوف العليا، وتبدأ الآن الفسحة الثانية" },
+        { time: "10:20", advance: 12, duration: 12, audio: "10", text: "🟠 تبدأ الآن الحصة السادسة 🟡" },
+        { time: "10:50", advance: 11, duration: 12, audio: "11", text: "🟠 انتهت الحصة السادسة، وتبدأ الآن الحصة السابعة 🟡" },
+        { time: "11:20", advance: 10, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
+        { time: "11:25", advance: 10, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
+      ];
+
 
       /* HELPERS */
       function toMin(t) {
@@ -561,7 +567,8 @@
       /* ========================================================
          STATE VARIABLES
          ======================================================== */
-      let lastEventAlertId = "";
+      let lastTriggeredAlertId = "";
+      let alertTimeout = null;
       let sliderCounter = 0;
       let athanActive = false;
       let athanPlayedKey = null;
@@ -580,14 +587,12 @@
          CORE FUNCTIONS
          ======================================================== */
 
-      // 1. UPDATE CLOCK
       function updateClock(d) {
         hourEl.style.transform = `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() * 0.5}deg)`;
         minuteEl.style.transform = `rotate(${d.getMinutes() * 6}deg)`;
         secondEl.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
       }
 
-      // 2. UPDATE DATE
       function updateDate(d) {
         let days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
@@ -604,8 +609,8 @@
         `;
       }
 
-      // 3. RENDER STATUS BOX
-      function renderStatusBox(boxElement, eventData, title, currentMinutes) {
+      // دالة مسؤولة عن رسم الصندوق بالألوان والأيقونات المخصصة
+      function renderStatusBox(boxElement, eventData, title, titleColor, icon, currentMinutes) {
         if (eventData) {
           boxElement.style.display = "block";
           const startMin = toMin(eventData.start);
@@ -618,8 +623,8 @@
           const isEndingSoon = remaining <= 5;
 
           boxElement.innerHTML = `
-            <div class="status-title">${title}</div>
-            <div>🟢 الآن ${eventData.name}</div>
+            <div class="status-title" style="color: ${titleColor};">${title}</div>
+            <div>${icon} الآن ${eventData.name}</div>
             <div class="status-time">
               <div class="time-row">
                 <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(eventData.start))}</span>
@@ -636,80 +641,72 @@
         }
       }
 
-      // 4. CHECK SCHEDULE
-      function checkSchedule(now) {
-        if (athanActive) return;
-
+      // 1. CHECK STATUS BOXES
+      function checkStatusBoxes(now) {
         let currentMinutes = now.getHours() * 60 + now.getMinutes();
-        let nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
         let today = now.getDay();
-        let blocked = [5, 6]; // Friday, Saturday
+        
+        // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
+        let isWedThu = (today === 3 || today === 4);
+        let currentPrimarySched = isWedThu ? schedPrimaryWedThu : schedPrimaryReg;
+        let currentUpperSched = isWedThu ? schedUpperWedThu : schedUpperReg;
 
-        // Determine correct schedule based on Day (3 is Wednesday)
-        let isWednesday = (today === 3);
-        let currentPrimarySched = isWednesday ? schedPrimaryWed : schedPrimaryReg;
-        let currentUpperSched = isWednesday ? schedUpperWed : schedUpperReg;
-
-        // Current Events
         let currentPrimary = currentPrimarySched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
         let currentUpper = currentUpperSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
 
-        // Render Boxes
-        renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", currentMinutes);
-        renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", currentMinutes);
-
-        // Alert Logic (10 seconds before start)
-        if (!blocked.includes(today)) {
-          let upcomingPrimary = currentPrimarySched.find((e) => currentMinutes < toMin(e.start));
-          let upcomingUpper = currentUpperSched.find((e) => currentMinutes < toMin(e.start));
-
-          let eventsToAlert = [];
-
-          const isStartingIn10Sec = (ev) => {
-             const eventStartSec = toMin(ev.start) * 60;
-             return (nowSeconds >= eventStartSec - 10 && nowSeconds < eventStartSec);
-          };
-
-          if (upcomingPrimary && isStartingIn10Sec(upcomingPrimary)) {
-              eventsToAlert.push({ name: upcomingPrimary.name, target: "للصفوف الأولية" });
-          }
-          
-          if (upcomingUpper && isStartingIn10Sec(upcomingUpper)) {
-              let duplicate = eventsToAlert.find(e => e.name === upcomingUpper.name);
-              if (duplicate) {
-                  duplicate.target = "للمرحلتين"; // Merge alert if same period starts at same time
-              } else {
-                  eventsToAlert.push({ name: upcomingUpper.name, target: "للصفوف العليا" });
-              }
-          }
-
-          eventsToAlert.forEach(ev => {
-             let alertId = ev.name + "-" + ev.target + "-" + nowSeconds;
-             if(lastEventAlertId !== alertId) {
-                 lastEventAlertId = alertId;
-                 
-                 const verb = ev.name.includes("الاصطفاف") ? "يبدأ" : "تبدأ";
-                 const targetText = ev.target === "للمرحلتين" ? "" : ` (${ev.target})`;
-
-                 overlay.innerHTML = `
-                  <div style="display:flex; align-items:center; justify-content:center; gap:15px; direction:rtl;">
-                    <span class="pulse-dot">🟢</span>
-                    <span>${verb} الآن ${ev.name}${targetText}</span>
-                  </div>
-                 `;
-                 overlay.classList.add("show");
-                 
-                 const sound = lessonSounds[ev.name];
-                 if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
-                 
-                 setTimeout(() => { overlay.classList.remove("show"); }, 12000);
-             }
-          });
-        }
+        // استدعاء دالة الرسم مع تمرير اللون والأيقونة المناسبة لكل مرحلة
+        renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", "#5d0413", "🟠", currentMinutes);
+        renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", "#d04931", "🟡", currentMinutes);
       }
 
-      // 5. NIGHT MODE
+      // 2. CHECK CUSTOM ALERTS
+      function checkAlerts(now) {
+        if (athanActive) return;
+        
+        let today = now.getDay();
+        let blocked = [5, 6]; // Friday, Saturday
+        if (blocked.includes(today)) return;
+
+        let isWedThu = (today === 3 || today === 4);
+        let activeAlerts = isWedThu ? alertsWedThu : alertsSunTue;
+        
+        let nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+        activeAlerts.forEach((alert, index) => {
+            let targetSec = toMin(alert.time) * 60;
+            let triggerSec = targetSec - alert.advance;
+
+            // Trigger window (exact match or within 2 seconds just in case of lag)
+            if (nowSeconds >= triggerSec && nowSeconds < triggerSec + 2) {
+                let alertId = (isWedThu ? "wt" : "st") + "-" + index;
+                if (lastTriggeredAlertId !== alertId) {
+                    lastTriggeredAlertId = alertId;
+                    showOverlayAlert(alert);
+                }
+            }
+        });
+      }
+
+      function showOverlayAlert(alert) {
+          overlay.innerHTML = `<div>${alert.text}</div>`;
+          overlay.classList.add("show");
+
+          const sound = audioFiles[alert.audio];
+          if (sound) { 
+              sound.currentTime = 0; 
+              sound.play().catch(() => {}); 
+          }
+
+          if (alertTimeout) clearTimeout(alertTimeout);
+          alertTimeout = setTimeout(() => {
+              overlay.classList.remove("show");
+          }, alert.duration * 1000);
+      }
+
+      // 3. NIGHT MODE
       function controlNightMode(now) {
+        if (!ENABLE_NIGHT_MODE) return; 
+        
         if (athanActive) return;
         const minutes = now.getHours() * 60 + now.getMinutes();
         const start = 21 * 60 + 20; // 9:20 PM
@@ -769,7 +766,7 @@
 
       function playAthan(prayerName) {
         athanActive = true;
-        Object.values(lessonSounds).forEach((a) => {
+        Object.values(audioFiles).forEach((a) => {
           a.pause(); a.currentTime = 0;
         });
 
@@ -833,7 +830,8 @@
         const currentSeconds = now.getSeconds();
 
         updateClock(now);
-        checkSchedule(now);
+        checkStatusBoxes(now);
+        checkAlerts(now);
         checkAthanOnline(now);
         controlNightMode(now);
 
@@ -874,10 +872,9 @@
         }
         filesToLoad.push("video/P1.mp4", "video/P2.mp4", "video/P3.mp4", "video/P4.mp4", "video/P5.mp4");
         
-        // Dynamically add all audio files to preload queue
         for(let i=0; i<=13; i++) {
-            let numStr = i < 10 ? "0"+i : ""+i;
-            filesToLoad.push(`audio/${numStr}.MP3`);
+            let key = i < 10 ? "0" + i : i.toString();
+            filesToLoad.push(`audio/${key}.MP3`);
         }
         filesToLoad.push("audio/athan.MP3");
 
