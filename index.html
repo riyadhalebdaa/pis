@@ -289,7 +289,7 @@
         z-index: 5000;
       }
 
-      /* OVERLAY */
+      /* OVERLAY (تم تعديل التأثير ليدعم Fade Out) */
       .overlay {
         position: fixed;
         top: 0;
@@ -307,7 +307,7 @@
         text-align: center;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.6s ease;
+        transition: opacity 0.6s ease, visibility 0s linear 0.6s;
         z-index: 6000;
         direction: rtl;
         padding: 40px;
@@ -315,8 +315,10 @@
       .overlay.show {
         opacity: 1;
         visibility: visible;
+        transition: opacity 0.6s ease, visibility 0s linear 0s;
       }
 
+      /* ATHAN VIDEO (تم التعديل لدعم Fade In / Fade Out) */
       #athanVideo {
         position: fixed;
         inset: 0;
@@ -324,8 +326,16 @@
         height: 100%;
         object-fit: cover;
         z-index: 4000;
-        display: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1.5s ease, visibility 0s linear 1.5s;
       }
+      #athanVideo.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 1.5s ease, visibility 0s linear 0s;
+      }
+
       #athanWhiteFade {
         position: fixed;
         inset: 0;
@@ -464,7 +474,8 @@
         { name: "الحصة الرابعة", start: "09:05", end: "09:45" },
         { name: "الفسحة الثانية", start: "09:45", end: "10:05" },
         { name: "الحصة الخامسة", start: "10:05", end: "10:45" },
-        { name: "الحصة السادسة", start: "10:45", end: "11:20" }
+        { name: "الحصة السادسة", start: "10:45", end: "11:20" },
+        { name: "الخروج", start: "11:20", end: "11:45" }
       ];
 
       const schedUpperReg = [
@@ -476,7 +487,8 @@
         { name: "الحصة الرابعة", start: "09:05", end: "09:45" },
         { name: "الحصة الخامسة", start: "09:45", end: "10:25" },
         { name: "الفسحة الثانية", start: "10:25", end: "10:45" },
-        { name: "الحصة السادسة", start: "10:45", end: "11:25" }
+        { name: "الحصة السادسة", start: "10:45", end: "11:25" },
+        { name: "الخروج", start: "11:25", end: "11:45" }
       ];
 
       const schedPrimaryWedThu = [
@@ -490,7 +502,7 @@
         { name: "الحصة الخامسة", start: "09:45", end: "10:20" },
         { name: "الحصة السادسة", start: "10:20", end: "10:50" },
         { name: "الحصة السابعة", start: "10:50", end: "11:20" },
-        { name: "الخروج", start: "11:20", end: "11:40" }
+        { name: "الخروج", start: "11:20", end: "11:45" }
       ];
 
       const schedUpperWedThu = [
@@ -612,10 +624,19 @@
         `;
       }
 
-      // دالة مسؤولة عن رسم الصندوق بالألوان والأيقونات المخصصة
       function renderStatusBox(boxElement, eventData, title, titleColor, icon, currentMinutes) {
         if (eventData) {
           boxElement.style.display = "block";
+          
+          // تعديل خاص لعرض شاشة "الخروج" بدون مواعيد أو شريط تقدم
+          if (eventData.name === "الخروج") {
+            boxElement.innerHTML = `
+              <div class="status-title" style="color: ${titleColor};">${title}</div>
+              <div style="margin-top: 15px; font-size: 22px; font-weight: bold;">${icon} الآن ${eventData.name}</div>
+            `;
+            return;
+          }
+
           const startMin = toMin(eventData.start);
           const endMin = toMin(eventData.end);
           const totalDuration = endMin - startMin;
@@ -644,7 +665,6 @@
         }
       }
 
-      // 1. CHECK STATUS BOXES
       function checkStatusBoxes(now) {
         let currentMinutes = now.getHours() * 60 + now.getMinutes();
         let today = now.getDay();
@@ -657,12 +677,10 @@
         let currentPrimary = currentPrimarySched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
         let currentUpper = currentUpperSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
 
-        // استدعاء دالة الرسم مع تمرير اللون والأيقونة المناسبة لكل مرحلة
         renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", "#5d0413", "🟠", currentMinutes);
         renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", "#d04931", "🟡", currentMinutes);
       }
 
-      // 2. CHECK CUSTOM ALERTS
       function checkAlerts(now) {
         if (athanActive) return;
         
@@ -679,7 +697,6 @@
             let targetSec = toMin(alert.time) * 60;
             let triggerSec = targetSec - alert.advance;
 
-            // Trigger window (exact match or within 2 seconds just in case of lag)
             if (nowSeconds >= triggerSec && nowSeconds < triggerSec + 2) {
                 let alertId = (isWedThu ? "wt" : "st") + "-" + index;
                 if (lastTriggeredAlertId !== alertId) {
@@ -706,7 +723,6 @@
           }, alert.duration * 1000);
       }
 
-      // 3. NIGHT MODE
       function controlNightMode(now) {
         if (!ENABLE_NIGHT_MODE) return; 
         
@@ -775,35 +791,28 @@
 
         overlay.classList.remove("show");
         bgVideo.pause();
-        slider.style.transition = "opacity 1.2s ease";
+        
+        // إخفاء السلايدر بتأثير التلاشي
         slider.style.opacity = "0";
 
         athanVideo.src = PRAYER_VIDEOS[prayerName];
-        athanVideo.style.display = "block";
-        athanVideo.style.opacity = "0";
-        athanVideo.style.transition = "opacity 1.5s ease";
 
         athanVideo.onloadeddata = () => {
+          athanVideo.classList.add("show"); // تفعيل Fade In
           athanVideo.play().catch(() => {});
           athanAudio.currentTime = 0;
           athanAudio.play().catch(() => {});
         };
-
-        setTimeout(() => { athanVideo.style.opacity = "1"; }, 100);
       }
 
       athanVideo.onended = function () {
-        athanVideo.style.transition = "opacity 1.5s ease";
-        athanVideo.style.opacity = "0";
-        slider.style.transition = "opacity 1.5s ease";
+        athanVideo.classList.remove("show"); // تفعيل Fade Out
         slider.style.opacity = "1";
 
         setTimeout(() => {
           athanVideo.pause();
-          athanVideo.style.display = "none";
-          athanVideo.style.opacity = "1";
           athanActive = false;
-        }, 1500);
+        }, 1500); // الانتظار حتى انتهاء التأثير (1.5 ثانية)
       };
 
       function checkAthanOnline(now) {
