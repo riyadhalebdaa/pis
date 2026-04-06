@@ -90,19 +90,20 @@
         opacity: 1;
       }
 
-      /* LOGO */
-      .logo-container {
+/* LOGO */
+      .top-right-logo {
         position: absolute;
-        top: 20px;
-        right: 30px;
-        background: #fff;
-        padding: 15px 40px;
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        top: 0;
+        right: 0;
+        /* استخدام نسبة مئوية من عرض الشاشة (مثلاً 30%) */
+        width: 17vw; 
+        
+        /* حدود للحماية حتى لا يصبح عملاقاً أو صغيراً جداً */
+        max-width: 839px; /* لا يتخطى حجمه الأصلي أبدًا */
+        min-width: 250px; /* لا يصغر جدًا وتختفي ملامحه */
+        
+        height: auto; /* يحافظ على النسبة والتناسب بين الطول والعرض تلقائياً */
         z-index: 5000;
-      }
-      .logo-container img {
-        height: 70px;
       }
 
       /* CLOCK */
@@ -358,7 +359,8 @@
       <div id="progressText">0%</div>
     </div>
 
-    <div class="logo-container"><img src="logo.png" /></div>
+    <img src="reslogo.png" class="top-right-logo" alt="Logo" />
+    
     <div class="slider" id="slider"></div>
 
     <div class="clock">
