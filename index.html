@@ -96,7 +96,7 @@
         top: 0;
         right: 0;
         /* استخدام نسبة مئوية من عرض الشاشة (مثلاً 30%) */
-        width: 11vw; 
+        width: 17vw; 
         
         /* حدود للحماية حتى لا يصبح عملاقاً أو صغيراً جداً */
         max-width: 839px; /* لا يتخطى حجمه الأصلي أبدًا */
@@ -672,7 +672,8 @@
         let today = now.getDay();
         
         // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
-        let isWedThu = (today === 3 || today === 4);
+        // تمت إضافة الرقم 0 (الأحد) ليتم تطبيق جدول الأربعاء والخميس عليه
+        let isWedThu = (today === 0 || today === 3 || today === 4);
         let currentPrimarySched = isWedThu ? schedPrimaryWedThu : schedPrimaryReg;
         let currentUpperSched = isWedThu ? schedUpperWedThu : schedUpperReg;
 
@@ -690,7 +691,8 @@
         let blocked = [5, 6]; // Friday, Saturday
         if (blocked.includes(today)) return;
 
-        let isWedThu = (today === 3 || today === 4);
+        // تمت إضافة الرقم 0 (الأحد) ليتم تطبيق تنبيهات الأربعاء والخميس عليه
+        let isWedThu = (today === 0 || today === 3 || today === 4);
         let activeAlerts = isWedThu ? alertsWedThu : alertsSunTue;
         
         let nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
