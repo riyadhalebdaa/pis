@@ -90,19 +90,33 @@
         opacity: 1;
       }
 
-/* LOGO */
+      /* RV VIDEO INTERSTITIAL */
+      #rvVideo {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 3000; /* تحت الأذان، ولكن فوق السلايدر */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1.5s ease, visibility 0s linear 1.5s;
+      }
+      #rvVideo.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 1.5s ease, visibility 0s linear 0s;
+      }
+
+      /* LOGO */
       .top-right-logo {
         position: absolute;
         top: 0;
         right: 0;
-        /* استخدام نسبة مئوية من عرض الشاشة (مثلاً 30%) */
         width: 11vw; 
-        
-        /* حدود للحماية حتى لا يصبح عملاقاً أو صغيراً جداً */
-        max-width: 839px; /* لا يتخطى حجمه الأصلي أبدًا */
-        min-width: 250px; /* لا يصغر جدًا وتختفي ملامحه */
-        
-        height: auto; /* يحافظ على النسبة والتناسب بين الطول والعرض تلقائياً */
+        max-width: 839px;
+        min-width: 250px;
+        height: auto;
         z-index: 5000;
       }
 
@@ -290,7 +304,7 @@
         z-index: 5000;
       }
 
-      /* OVERLAY (تم تعديل التأثير ليدعم Fade Out) */
+      /* OVERLAY */
       .overlay {
         position: fixed;
         top: 0;
@@ -319,7 +333,7 @@
         transition: opacity 0.6s ease, visibility 0s linear 0s;
       }
 
-      /* ATHAN VIDEO (تم التعديل لدعم Fade In / Fade Out) */
+      /* ATHAN VIDEO */
       #athanVideo {
         position: fixed;
         inset: 0;
@@ -380,6 +394,8 @@
     <div class="overlay" id="overlay"></div>
     <div id="athanWhiteFade"></div>
 
+    <video id="rvVideo" playsinline></video>
+
     <video id="athanVideo" playsinline></video>
     <audio id="athanAudio" src="audio/athan.MP3"></audio>
 
@@ -406,6 +422,7 @@
       const bgVideo = document.getElementById("bgVideo");
       const athanVideo = document.getElementById("athanVideo");
       const athanAudio = document.getElementById("athanAudio");
+      const rvVideo = document.getElementById("rvVideo");
       const slider = document.getElementById("slider");
 
       // Clock Elements
@@ -435,33 +452,117 @@
       }
 
       /* ========================================================
-         SLIDER SETUP
+         NEW SLIDER & MEDIA LOGIC
          ======================================================== */
       const totalImages = 300;
-      let currentIndex = 1;
+      let currentIndex = 1; // للصور العادية من preimg
+      
+      // متغيرات النظام الجديد (المجلد R والمجلد RV)
+      let currentRIndex = 1; // يتبع الصور من R-01 إلى R-26
+      let currentRVIndex = 0; // 0 يمثل RV-01, و 1 يمثل RV-02
+      let normalSlideStreak = 1; // عداد يحسب كم صورة عادية ظهرت تباعاً
+      let rImageStreak = 0; // عداد يحسب كم صورة من R ظهرت (لتحديد موعد عرض الفيديو)
+      
+      let slideTimer = 0; // موقت الثواني لكل شريحة
+      let currentSlideDuration = 5; // المدة الافتراضية للصور العادية
+      let isRVVideoPlaying = false; // حالة تمنع السلايدر من العمل أثناء تشغيل الفيديو
+
       let img1 = document.createElement("img");
       let img2 = document.createElement("img");
-
       img1.className = "slide active";
       img2.className = "slide";
       slider.appendChild(img1);
       slider.appendChild(img2);
 
-      function getImagePath(index) {
-        return `preimg/Slide${index}.JPG`;
-      }
-      img1.src = getImagePath(currentIndex);
+      img1.src = `preimg/Slide${currentIndex}.JPG`;
 
-      function nextSlide() {
-        let nextIndex = currentIndex + 1;
-        if (nextIndex > totalImages) nextIndex = 1;
-        img2.src = getImagePath(nextIndex);
+      // دالة لتنسيق الأرقام لتصبح برقمين (مثل: 01, 02)
+      function padZero(num) {
+          return num < 10 ? "0" + num : num.toString();
+      }
+
+      // دالة موحدة لعملية الانتقال بين أي صورتين
+      function transitionToImage(src) {
+        img2.src = src;
         img2.onload = () => {
           img2.classList.add("active");
           img1.classList.remove("active");
           [img1, img2] = [img2, img1];
-          currentIndex = nextIndex;
         };
+      }
+
+      // الدالة الرئيسية التي تقرر الشريحة القادمة بناءً على الشروط
+      function advancePresentation() {
+          if (normalSlideStreak >= 10) {
+              // إذا وصلنا لـ 10 صور عادية، نتحقق من عداد صور الـ R
+              if (rImageStreak >= 7) {
+                  // عرض فيديو من RV بدلاً من صورة R
+                  showRVVideo();
+                  rImageStreak = 0; // تصفير عداد صور R
+                  normalSlideStreak = 0; // تصفير عداد الصور العادية
+              } else {
+                  // عرض صورة من مجلد R
+                  let rSrc = `preimg/R/R-${padZero(currentRIndex)}.jpg`;
+                  transitionToImage(rSrc);
+                  currentSlideDuration = 11; // الصورة تأخذ 11 ثانية كما طلبت
+                  
+                  // تحديث مؤشر الصورة ليعود للبداية بعد 26
+                  currentRIndex++;
+                  if (currentRIndex > 26) currentRIndex = 1;
+                  
+                  rImageStreak++;
+                  normalSlideStreak = 0; // تصفير عداد الصور العادية للبدء من جديد
+              }
+          } else {
+              // عرض صورة عادية من preimg
+              currentIndex++;
+              if (currentIndex > totalImages) currentIndex = 1;
+              let normalSrc = `preimg/Slide${currentIndex}.JPG`;
+              transitionToImage(normalSrc);
+              currentSlideDuration = 5; // الصورة العادية تأخذ 5 ثواني
+              
+              normalSlideStreak++;
+          }
+      }
+
+      // تشغيل فيديو RV
+      function showRVVideo() {
+          isRVVideoPlaying = true;
+          
+          let rvSrc = `video/RV/RV-0${currentRVIndex + 1}.mp4`; // الاختيار بين RV-01 و RV-02
+          rvVideo.src = rvSrc;
+          
+          rvVideo.onloadeddata = () => {
+              rvVideo.classList.add("show");
+              rvVideo.play().catch(e => console.log("خطأ تشغيل فيديو RV:", e));
+          };
+          
+          // إنهاء الفيديو إما بانتهاء مدته الفعلية أو كإجراء احتياطي بعد الوقت المحدد
+          rvVideo.onended = endRVVideo;
+          
+          let fallbackDuration = (currentRVIndex === 0) ? 40 : 22; // تأمين المدة كما طلبت
+          setTimeout(() => {
+              if (isRVVideoPlaying) endRVVideo();
+          }, (fallbackDuration * 1000) + 1000); 
+      }
+
+      function endRVVideo() {
+          if (!isRVVideoPlaying) return;
+          isRVVideoPlaying = false;
+          rvVideo.classList.remove("show");
+          
+          setTimeout(() => {
+              rvVideo.pause();
+              rvVideo.src = "";
+          }, 1500); // انتظار حتى ينتهي تأثير الـ Fade Out
+          
+          // التبديل للملف التالي للمرة القادمة
+          currentRVIndex++;
+          if (currentRVIndex > 1) currentRVIndex = 0;
+          
+          // الانتقال فوراً للشريحة العادية التالية
+          slideTimer = 0; 
+          advancePresentation();
       }
 
       /* ========================================================
@@ -586,7 +687,6 @@
          ======================================================== */
       let lastTriggeredAlertId = "";
       let alertTimeout = null;
-      let sliderCounter = 0;
       let athanActive = false;
       let athanPlayedKey = null;
       let lastFetchDate = null;
@@ -630,7 +730,6 @@
         if (eventData) {
           boxElement.style.display = "block";
           
-          // تعديل خاص لعرض شاشة "الخروج" بدون مواعيد أو شريط تقدم
           if (eventData.name === "الخروج") {
             boxElement.innerHTML = `
               <div class="status-title" style="color: ${titleColor};">${title}</div>
@@ -671,7 +770,6 @@
         let currentMinutes = now.getHours() * 60 + now.getMinutes();
         let today = now.getDay();
         
-        // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
         let isWedThu = (today === 3 || today === 4);
         let currentPrimarySched = isWedThu ? schedPrimaryWedThu : schedPrimaryReg;
         let currentUpperSched = isWedThu ? schedUpperWedThu : schedUpperReg;
@@ -687,7 +785,7 @@
         if (athanActive) return;
         
         let today = now.getDay();
-        let blocked = [5, 6]; // Friday, Saturday
+        let blocked = [5, 6];
         if (blocked.includes(today)) return;
 
         let isWedThu = (today === 3 || today === 4);
@@ -730,8 +828,8 @@
         
         if (athanActive) return;
         const minutes = now.getHours() * 60 + now.getMinutes();
-        const start = 21 * 60 + 20; // 9:20 PM
-        const end = 24 * 60;        // 12:00 AM
+        const start = 21 * 60 + 20; 
+        const end = 24 * 60;        
 
         if (minutes >= start && minutes < end) {
           if (bgVideo.style.display !== "block") {
@@ -794,13 +892,25 @@
         overlay.classList.remove("show");
         bgVideo.pause();
         
-        // إخفاء السلايدر بتأثير التلاشي
         slider.style.opacity = "0";
+        
+        // إيقاف فيديوهات RV إذا كانت تعمل وقت دخول الأذان
+        if (isRVVideoPlaying) {
+            rvVideo.pause();
+            rvVideo.classList.remove("show");
+            isRVVideoPlaying = false;
+            
+            // تهيئة السلايدر للعودة للشرائح الطبيعية بعد الصلاة
+            currentRVIndex++;
+            if (currentRVIndex > 1) currentRVIndex = 0;
+            slideTimer = 0;
+            normalSlideStreak = 1;
+        }
 
         athanVideo.src = PRAYER_VIDEOS[prayerName];
 
         athanVideo.onloadeddata = () => {
-          athanVideo.classList.add("show"); // تفعيل Fade In
+          athanVideo.classList.add("show");
           athanVideo.play().catch(() => {});
           athanAudio.currentTime = 0;
           athanAudio.play().catch(() => {});
@@ -808,13 +918,13 @@
       }
 
       athanVideo.onended = function () {
-        athanVideo.classList.remove("show"); // تفعيل Fade Out
+        athanVideo.classList.remove("show"); 
         slider.style.opacity = "1";
 
         setTimeout(() => {
           athanVideo.pause();
           athanActive = false;
-        }, 1500); // الانتظار حتى انتهاء التأثير (1.5 ثانية)
+        }, 1500); 
       };
 
       function checkAthanOnline(now) {
@@ -853,11 +963,12 @@
           updateDate(now);
         }
 
-        if (!athanActive && bgVideo.style.display !== "block") {
-            sliderCounter++;
-            if (sliderCounter >= 5) {
-                nextSlide();
-                sliderCounter = 0;
+        // نظام المؤقت الجديد الذي يدير السلايدر والصور وفيديوهات RV
+        if (!athanActive && bgVideo.style.display !== "block" && !isRVVideoPlaying) {
+            slideTimer++;
+            if (slideTimer >= currentSlideDuration) {
+                slideTimer = 0;
+                advancePresentation();
             }
         }
       }
@@ -884,6 +995,10 @@
         for (let i = 1; i <= firstImagesCount; i++) {
           filesToLoad.push(`preimg/Slide${i}.JPG`);
         }
+        
+        // إضافة بعض الملفات الجديدة لقائمة التحميل المسبق لتجنب التأخير
+        filesToLoad.push("preimg/R/R-01.jpg", "video/RV/RV-01.mp4");
+        
         filesToLoad.push("video/P1.mp4", "video/P2.mp4", "video/P3.mp4", "video/P4.mp4", "video/P5.mp4");
         
         for(let i=0; i<=13; i++) {
