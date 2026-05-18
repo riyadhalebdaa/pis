@@ -710,12 +710,20 @@
         secondEl.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
       }
 
-      function updateDate(d) {
+function updateDate(d) {
         let days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        
+        // إنشاء نسخة من التاريخ وتعديلها بنقصان يوم واحد لضبط التاريخ الهجري
+        let hijriAdjustment = new Date(d.getTime());
+        hijriAdjustment.setDate(hijriAdjustment.getDate() - 1); 
+
+        // استخدام التاريخ المعدل لحساب الهجري
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
           day: "numeric", month: "long", year: "numeric",
-        }).format(d);
+        }).format(hijriAdjustment);
         hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
+        
+        // استخدام التاريخ الأصلي (d) للميلادي حتى لا يتأثر
         let greg = new Intl.DateTimeFormat("ar-EG", {
           day: "numeric", month: "long", year: "numeric",
         }).format(d);
