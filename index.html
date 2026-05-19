@@ -97,12 +97,30 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        z-index: 3000; /* تحت الأذان، ولكن فوق السلايدر */
+        z-index: 3000; /* تحت الأذان والتكبيرات، ولكن فوق السلايدر */
         opacity: 0;
         visibility: hidden;
         transition: opacity 1.5s ease, visibility 0s linear 1.5s;
       }
       #rvVideo.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 1.5s ease, visibility 0s linear 0s;
+      }
+
+      /* TAKBERAAT VIDEO */
+      #takberaatVideo {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 3500; /* أعلى من RV ولكن تحت الأذان */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1.5s ease, visibility 0s linear 1.5s;
+      }
+      #takberaatVideo.show {
         opacity: 1;
         visibility: visible;
         transition: opacity 1.5s ease, visibility 0s linear 0s;
@@ -395,6 +413,9 @@
     <div id="athanWhiteFade"></div>
 
     <video id="rvVideo" playsinline></video>
+    
+    <video id="takberaatVideo" src="video/T/tkaberaat.mp4" muted playsinline></video>
+    <audio id="takberaatAudio" src="audio/takberaat.MP3"></audio>
 
     <video id="athanVideo" playsinline></video>
     <audio id="athanAudio" src="audio/athan.MP3"></audio>
@@ -455,17 +476,16 @@
          NEW SLIDER & MEDIA LOGIC
          ======================================================== */
       const totalImages = 300;
-      let currentIndex = 1; // للصور العادية من preimg
+      let currentIndex = 1; 
       
-      // متغيرات النظام الجديد (المجلد R والمجلد RV)
-      let currentRIndex = 1; // يتبع الصور من R-01 إلى R-26
-      let currentRVIndex = 0; // 0 يمثل RV-01, و 1 يمثل RV-02
-      let normalSlideStreak = 1; // عداد يحسب كم صورة عادية ظهرت تباعاً
-      let rImageStreak = 0; // عداد يحسب كم صورة من R ظهرت (لتحديد موعد عرض الفيديو)
+      let currentRIndex = 1; 
+      let currentRVIndex = 0; 
+      let normalSlideStreak = 1; 
+      let rImageStreak = 0; 
       
-      let slideTimer = 0; // موقت الثواني لكل شريحة
-      let currentSlideDuration = 5; // المدة الافتراضية للصور العادية
-      let isRVVideoPlaying = false; // حالة تمنع السلايدر من العمل أثناء تشغيل الفيديو
+      let slideTimer = 0; 
+      let currentSlideDuration = 5; 
+      let isRVVideoPlaying = false; 
 
       let img1 = document.createElement("img");
       let img2 = document.createElement("img");
@@ -476,12 +496,10 @@
 
       img1.src = `preimg/Slide${currentIndex}.JPG`;
 
-      // دالة لتنسيق الأرقام لتصبح برقمين (مثل: 01, 02)
       function padZero(num) {
           return num < 10 ? "0" + num : num.toString();
       }
 
-      // دالة موحدة لعملية الانتقال بين أي صورتين
       function transitionToImage(src) {
         img2.src = src;
         img2.onload = () => {
@@ -491,45 +509,38 @@
         };
       }
 
-      // الدالة الرئيسية التي تقرر الشريحة القادمة بناءً على الشروط
       function advancePresentation() {
           if (normalSlideStreak >= 10) {
-              // إذا وصلنا لـ 10 صور عادية، نتحقق من عداد صور الـ R
               if (rImageStreak >= 7) {
-                  // عرض فيديو من RV بدلاً من صورة R
                   showRVVideo();
-                  rImageStreak = 0; // تصفير عداد صور R
-                  normalSlideStreak = 0; // تصفير عداد الصور العادية
+                  rImageStreak = 0; 
+                  normalSlideStreak = 0; 
               } else {
-                  // عرض صورة من مجلد R
                   let rSrc = `preimg/R/R-${padZero(currentRIndex)}.jpg`;
                   transitionToImage(rSrc);
-                  currentSlideDuration = 11; // الصورة تأخذ 11 ثانية كما طلبت
+                  currentSlideDuration = 11; 
                   
-                  // تحديث مؤشر الصورة ليعود للبداية بعد 26
                   currentRIndex++;
                   if (currentRIndex > 26) currentRIndex = 1;
                   
                   rImageStreak++;
-                  normalSlideStreak = 0; // تصفير عداد الصور العادية للبدء من جديد
+                  normalSlideStreak = 0; 
               }
           } else {
-              // عرض صورة عادية من preimg
               currentIndex++;
               if (currentIndex > totalImages) currentIndex = 1;
               let normalSrc = `preimg/Slide${currentIndex}.JPG`;
               transitionToImage(normalSrc);
-              currentSlideDuration = 5; // الصورة العادية تأخذ 5 ثواني
+              currentSlideDuration = 5; 
               
               normalSlideStreak++;
           }
       }
 
-      // تشغيل فيديو RV
       function showRVVideo() {
           isRVVideoPlaying = true;
           
-          let rvSrc = `video/RV/RV-0${currentRVIndex + 1}.mp4`; // الاختيار بين RV-01 و RV-02
+          let rvSrc = `video/RV/RV-0${currentRVIndex + 1}.mp4`; 
           rvVideo.src = rvSrc;
           
           rvVideo.onloadeddata = () => {
@@ -537,10 +548,9 @@
               rvVideo.play().catch(e => console.log("خطأ تشغيل فيديو RV:", e));
           };
           
-          // إنهاء الفيديو إما بانتهاء مدته الفعلية أو كإجراء احتياطي بعد الوقت المحدد
           rvVideo.onended = endRVVideo;
           
-          let fallbackDuration = (currentRVIndex === 0) ? 40 : 22; // تأمين المدة كما طلبت
+          let fallbackDuration = (currentRVIndex === 0) ? 40 : 22; 
           setTimeout(() => {
               if (isRVVideoPlaying) endRVVideo();
           }, (fallbackDuration * 1000) + 1000); 
@@ -554,15 +564,16 @@
           setTimeout(() => {
               rvVideo.pause();
               rvVideo.src = "";
-          }, 1500); // انتظار حتى ينتهي تأثير الـ Fade Out
+          }, 1500); 
           
-          // التبديل للملف التالي للمرة القادمة
           currentRVIndex++;
           if (currentRVIndex > 1) currentRVIndex = 0;
           
-          // الانتقال فوراً للشريحة العادية التالية
           slideTimer = 0; 
-          advancePresentation();
+          // لا نستمر بالشرائح إذا كانت التكبيرات تعمل
+          if (!isTakberaatPlaying) {
+              advancePresentation();
+          }
       }
 
       /* ========================================================
@@ -683,7 +694,7 @@
       }
 
       /* ========================================================
-         STATE VARIABLES
+         STATE VARIABLES & TAKBERAAT SYSTEM
          ======================================================== */
       let lastTriggeredAlertId = "";
       let alertTimeout = null;
@@ -700,6 +711,78 @@
         Isha: "video/P5.mp4",
       };
 
+      // متغيرات التكبيرات وقت الفسحة
+      let isTakberaatPlaying = false;
+      let takberaatFullyEndedForThisRecess = false; 
+      let recessAlertEndTime = null;
+      let currentRecessId = null;
+
+      const takberaatVideo = document.getElementById("takberaatVideo");
+      const takberaatAudio = document.getElementById("takberaatAudio");
+
+      // تشغيل التكبيرات
+      function startTakberaat() {
+          if (athanActive) return; 
+          isTakberaatPlaying = true;
+          
+          if (isRVVideoPlaying) {
+              endRVVideo(); // إيقاف إعلان RV إذا كان يعمل
+          }
+
+          takberaatVideo.loop = true; 
+          takberaatAudio.loop = true; 
+          takberaatAudio.currentTime = 0;
+          takberaatVideo.currentTime = 0;
+
+          takberaatVideo.classList.add("show");
+          takberaatVideo.play().catch(e => console.log(e));
+          takberaatAudio.play().catch(e => console.log(e));
+      }
+
+      // حدث انتهاء ملف الصوت (يعمل فقط عندما يتم إلغاء الـ loop)
+      takberaatAudio.onended = function() {
+          if (!takberaatAudio.loop && isTakberaatPlaying) {
+              endTakberaatFadeOut();
+          }
+      };
+
+      // التوقف التدريجي للتكبيرات
+      function endTakberaatFadeOut() {
+          takberaatVideo.classList.remove("show"); // تفعيل Fade Out
+          takberaatFullyEndedForThisRecess = true;
+          
+          setTimeout(() => {
+              takberaatVideo.pause();
+              isTakberaatPlaying = false; // يتيح للسلايدر الاستئناف
+          }, 1500); 
+      }
+
+      // الإيقاف الإجباري (يُستخدم إذا دخل وقت الأذان أو تغير الوقت فجأة)
+      function forceStopTakberaat() {
+          isTakberaatPlaying = false;
+          takberaatVideo.classList.remove("show");
+          takberaatAudio.pause();
+          setTimeout(() => {
+              takberaatVideo.pause();
+          }, 1500);
+      }
+
+      // دالة لجلب الفسحة النشطة حالياً (إن وجدت)
+      function getActiveRecess(now) {
+          let currentMinutes = now.getHours() * 60 + now.getMinutes();
+          let today = now.getDay();
+          let isWedThu = (today === 3 || today === 4);
+          let pSched = isWedThu ? schedPrimaryWedThu : schedPrimaryReg;
+          let uSched = isWedThu ? schedUpperWedThu : schedUpperReg;
+
+          let pCurrent = pSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+          let uCurrent = uSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+
+          if (pCurrent && pCurrent.name.includes("الفسحة")) return pCurrent;
+          if (uCurrent && uCurrent.name.includes("الفسحة")) return uCurrent;
+          return null;
+      }
+
       /* ========================================================
          CORE FUNCTIONS
          ======================================================== */
@@ -710,20 +793,17 @@
         secondEl.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
       }
 
-function updateDate(d) {
+      function updateDate(d) {
         let days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         
-        // إنشاء نسخة من التاريخ وتعديلها بنقصان يوم واحد لضبط التاريخ الهجري
         let hijriAdjustment = new Date(d.getTime());
         hijriAdjustment.setDate(hijriAdjustment.getDate() - 1); 
 
-        // استخدام التاريخ المعدل لحساب الهجري
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
           day: "numeric", month: "long", year: "numeric",
         }).format(hijriAdjustment);
         hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
         
-        // استخدام التاريخ الأصلي (d) للميلادي حتى لا يتأثر
         let greg = new Intl.DateTimeFormat("ar-EG", {
           day: "numeric", month: "long", year: "numeric",
         }).format(d);
@@ -825,6 +905,11 @@ function updateDate(d) {
               sound.play().catch(() => {}); 
           }
 
+          // إذا كان التنبيه يخص الفسحة، نحدد موعد انتهاء التنبيه لتشغيل التكبيرات فوراً بعده
+          if (alert.text.includes("الفسحة")) {
+              recessAlertEndTime = Date.now() + (alert.duration * 1000) + 500; // إضافة 500ms لضمان سلاسة الانتقال
+          }
+
           if (alertTimeout) clearTimeout(alertTimeout);
           alertTimeout = setTimeout(() => {
               overlay.classList.remove("show");
@@ -902,17 +987,19 @@ function updateDate(d) {
         
         slider.style.opacity = "0";
         
-        // إيقاف فيديوهات RV إذا كانت تعمل وقت دخول الأذان
         if (isRVVideoPlaying) {
             rvVideo.pause();
             rvVideo.classList.remove("show");
             isRVVideoPlaying = false;
-            
-            // تهيئة السلايدر للعودة للشرائح الطبيعية بعد الصلاة
             currentRVIndex++;
             if (currentRVIndex > 1) currentRVIndex = 0;
             slideTimer = 0;
             normalSlideStreak = 1;
+        }
+
+        // إيقاف التكبيرات إجبارياً إذا دخل وقت الأذان
+        if (isTakberaatPlaying) {
+            forceStopTakberaat();
         }
 
         athanVideo.src = PRAYER_VIDEOS[prayerName];
@@ -971,8 +1058,51 @@ function updateDate(d) {
           updateDate(now);
         }
 
-        // نظام المؤقت الجديد الذي يدير السلايدر والصور وفيديوهات RV
-        if (!athanActive && bgVideo.style.display !== "block" && !isRVVideoPlaying) {
+        // --- TAKBERAAT (RECESS) SYSTEM LOGIC ---
+        let activeRecess = getActiveRecess(now);
+
+        if (activeRecess) {
+            let recessId = activeRecess.name + activeRecess.start;
+            if (currentRecessId !== recessId) {
+                // إذا بدأنا في فسحة جديدة
+                currentRecessId = recessId;
+                takberaatFullyEndedForThisRecess = false;
+                recessAlertEndTime = null; 
+            }
+
+            let recessEndSeconds = toMin(activeRecess.end) * 60;
+            let currentSecondsFromMidnight = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            let remainingSeconds = recessEndSeconds - currentSecondsFromMidnight;
+
+            // شرط التشغيل: مسموح بالتشغيل، ولم ينتهِ لهذه الفسحة، وإما لا يوجد تنبيه يمنع أو انقضى وقته
+            if (!isTakberaatPlaying && !takberaatFullyEndedForThisRecess) {
+                if (!recessAlertEndTime || Date.now() >= recessAlertEndTime) {
+                    startTakberaat();
+                }
+            }
+
+            // شرط الإيقاف الذكي (قبل النهاية بـ 110 ثانية)
+            if (isTakberaatPlaying) {
+                if (remainingSeconds <= 110) {
+                    takberaatAudio.loop = false; // نوقف التكرار ليأخذ الصوت مساره الطبيعي للإغلاق
+                }
+            }
+        } else {
+            // لسنا في وقت الفسحة الآن، نقوم بتهيئة القيم للفسحة القادمة
+            if (currentRecessId) {
+                currentRecessId = null;
+                takberaatFullyEndedForThisRecess = false;
+                recessAlertEndTime = null;
+                if (isTakberaatPlaying) {
+                    forceStopTakberaat();
+                }
+            }
+        }
+        // ---------------------------------------
+
+        // نظام المؤقت الذي يدير السلايدر والصور وفيديوهات RV
+        // السلايدر يتوقف تماماً (ولا يزيد عداده) إذا كانت التكبيرات تعمل
+        if (!athanActive && bgVideo.style.display !== "block" && !isRVVideoPlaying && !isTakberaatPlaying) {
             slideTimer++;
             if (slideTimer >= currentSlideDuration) {
                 slideTimer = 0;
@@ -1004,8 +1134,10 @@ function updateDate(d) {
           filesToLoad.push(`preimg/Slide${i}.JPG`);
         }
         
-        // إضافة بعض الملفات الجديدة لقائمة التحميل المسبق لتجنب التأخير
         filesToLoad.push("preimg/R/R-01.jpg", "video/RV/RV-01.mp4");
+        
+        // --- إضافة ملفات الفسحة الجديدة (التكبيرات) للتحميل المسبق ---
+        filesToLoad.push("video/T/tkaberaat.mp4", "audio/takberaat.MP3");
         
         filesToLoad.push("video/P1.mp4", "video/P2.mp4", "video/P3.mp4", "video/P4.mp4", "video/P5.mp4");
         
