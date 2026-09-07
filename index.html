@@ -90,33 +90,19 @@
         opacity: 1;
       }
 
-      /* RV VIDEO INTERSTITIAL */
-      #rvVideo {
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 3000; /* تحت الأذان، ولكن فوق السلايدر */
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 1.5s ease, visibility 0s linear 1.5s;
-      }
-      #rvVideo.show {
-        opacity: 1;
-        visibility: visible;
-        transition: opacity 1.5s ease, visibility 0s linear 0s;
-      }
-
-      /* LOGO */
+/* LOGO */
       .top-right-logo {
         position: absolute;
         top: 0;
         right: 0;
+        /* استخدام نسبة مئوية من عرض الشاشة (مثلاً 30%) */
         width: 11vw; 
-        max-width: 839px;
-        min-width: 250px;
-        height: auto;
+        
+        /* حدود للحماية حتى لا يصبح عملاقاً أو صغيراً جداً */
+        max-width: 839px; /* لا يتخطى حجمه الأصلي أبدًا */
+        min-width: 250px; /* لا يصغر جدًا وتختفي ملامحه */
+        
+        height: auto; /* يحافظ على النسبة والتناسب بين الطول والعرض تلقائياً */
         z-index: 5000;
       }
 
@@ -304,7 +290,7 @@
         z-index: 5000;
       }
 
-      /* OVERLAY */
+      /* OVERLAY (تم تعديل التأثير ليدعم Fade Out) */
       .overlay {
         position: fixed;
         top: 0;
@@ -333,7 +319,7 @@
         transition: opacity 0.6s ease, visibility 0s linear 0s;
       }
 
-      /* ATHAN VIDEO */
+      /* ATHAN VIDEO (تم التعديل لدعم Fade In / Fade Out) */
       #athanVideo {
         position: fixed;
         inset: 0;
@@ -394,8 +380,6 @@
     <div class="overlay" id="overlay"></div>
     <div id="athanWhiteFade"></div>
 
-    <video id="rvVideo" playsinline></video>
-
     <video id="athanVideo" playsinline></video>
     <audio id="athanAudio" src="audio/athan.MP3"></audio>
 
@@ -422,7 +406,6 @@
       const bgVideo = document.getElementById("bgVideo");
       const athanVideo = document.getElementById("athanVideo");
       const athanAudio = document.getElementById("athanAudio");
-      const rvVideo = document.getElementById("rvVideo");
       const slider = document.getElementById("slider");
 
       // Clock Elements
@@ -452,117 +435,33 @@
       }
 
       /* ========================================================
-         NEW SLIDER & MEDIA LOGIC
+         SLIDER SETUP
          ======================================================== */
       const totalImages = 300;
-      let currentIndex = 1; // للصور العادية من preimg
-      
-      // متغيرات النظام الجديد (المجلد R والمجلد RV)
-      let currentRIndex = 1; // يتبع الصور من R-01 إلى R-26
-      let currentRVIndex = 0; // 0 يمثل RV-01, و 1 يمثل RV-02
-      let normalSlideStreak = 1; // عداد يحسب كم صورة عادية ظهرت تباعاً
-      let rImageStreak = 0; // عداد يحسب كم صورة من R ظهرت (لتحديد موعد عرض الفيديو)
-      
-      let slideTimer = 0; // موقت الثواني لكل شريحة
-      let currentSlideDuration = 5; // المدة الافتراضية للصور العادية
-      let isRVVideoPlaying = false; // حالة تمنع السلايدر من العمل أثناء تشغيل الفيديو
-
+      let currentIndex = 1;
       let img1 = document.createElement("img");
       let img2 = document.createElement("img");
+
       img1.className = "slide active";
       img2.className = "slide";
       slider.appendChild(img1);
       slider.appendChild(img2);
 
-      img1.src = `preimg/Slide${currentIndex}.JPG`;
-
-      // دالة لتنسيق الأرقام لتصبح برقمين (مثل: 01, 02)
-      function padZero(num) {
-          return num < 10 ? "0" + num : num.toString();
+      function getImagePath(index) {
+        return `preimg/Slide${index}.JPG`;
       }
+      img1.src = getImagePath(currentIndex);
 
-      // دالة موحدة لعملية الانتقال بين أي صورتين
-      function transitionToImage(src) {
-        img2.src = src;
+      function nextSlide() {
+        let nextIndex = currentIndex + 1;
+        if (nextIndex > totalImages) nextIndex = 1;
+        img2.src = getImagePath(nextIndex);
         img2.onload = () => {
           img2.classList.add("active");
           img1.classList.remove("active");
           [img1, img2] = [img2, img1];
+          currentIndex = nextIndex;
         };
-      }
-
-      // الدالة الرئيسية التي تقرر الشريحة القادمة بناءً على الشروط
-      function advancePresentation() {
-          if (normalSlideStreak >= 10) {
-              // إذا وصلنا لـ 10 صور عادية، نتحقق من عداد صور الـ R
-              if (rImageStreak >= 7) {
-                  // عرض فيديو من RV بدلاً من صورة R
-                  showRVVideo();
-                  rImageStreak = 0; // تصفير عداد صور R
-                  normalSlideStreak = 0; // تصفير عداد الصور العادية
-              } else {
-                  // عرض صورة من مجلد R
-                  let rSrc = `preimg/R/R-${padZero(currentRIndex)}.jpg`;
-                  transitionToImage(rSrc);
-                  currentSlideDuration = 11; // الصورة تأخذ 11 ثانية كما طلبت
-                  
-                  // تحديث مؤشر الصورة ليعود للبداية بعد 26
-                  currentRIndex++;
-                  if (currentRIndex > 26) currentRIndex = 1;
-                  
-                  rImageStreak++;
-                  normalSlideStreak = 0; // تصفير عداد الصور العادية للبدء من جديد
-              }
-          } else {
-              // عرض صورة عادية من preimg
-              currentIndex++;
-              if (currentIndex > totalImages) currentIndex = 1;
-              let normalSrc = `preimg/Slide${currentIndex}.JPG`;
-              transitionToImage(normalSrc);
-              currentSlideDuration = 5; // الصورة العادية تأخذ 5 ثواني
-              
-              normalSlideStreak++;
-          }
-      }
-
-      // تشغيل فيديو RV
-      function showRVVideo() {
-          isRVVideoPlaying = true;
-          
-          let rvSrc = `video/RV/RV-0${currentRVIndex + 1}.mp4`; // الاختيار بين RV-01 و RV-02
-          rvVideo.src = rvSrc;
-          
-          rvVideo.onloadeddata = () => {
-              rvVideo.classList.add("show");
-              rvVideo.play().catch(e => console.log("خطأ تشغيل فيديو RV:", e));
-          };
-          
-          // إنهاء الفيديو إما بانتهاء مدته الفعلية أو كإجراء احتياطي بعد الوقت المحدد
-          rvVideo.onended = endRVVideo;
-          
-          let fallbackDuration = (currentRVIndex === 0) ? 40 : 22; // تأمين المدة كما طلبت
-          setTimeout(() => {
-              if (isRVVideoPlaying) endRVVideo();
-          }, (fallbackDuration * 1000) + 1000); 
-      }
-
-      function endRVVideo() {
-          if (!isRVVideoPlaying) return;
-          isRVVideoPlaying = false;
-          rvVideo.classList.remove("show");
-          
-          setTimeout(() => {
-              rvVideo.pause();
-              rvVideo.src = "";
-          }, 1500); // انتظار حتى ينتهي تأثير الـ Fade Out
-          
-          // التبديل للملف التالي للمرة القادمة
-          currentRVIndex++;
-          if (currentRVIndex > 1) currentRVIndex = 0;
-          
-          // الانتقال فوراً للشريحة العادية التالية
-          slideTimer = 0; 
-          advancePresentation();
       }
 
       /* ========================================================
@@ -570,50 +469,56 @@
          ======================================================== */
       const schedPrimaryReg = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
-        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
-        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
-        { name: "الفسحة الأولى", start: "08:00", end: "08:20" },
-        { name: "الحصة الثالثة", start: "08:20", end: "09:05" },
-        { name: "الحصة الرابعة", start: "09:05", end: "09:50" },
-        { name: "الفسحة الثانية", start: "09:50", end: "10:10" },
-        { name: "الحصة الخامسة", start: "10:10", end: "10:45" },
-        { name: "الخروج", start: "10:45", end: "11:00" }
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:50" },
+        { name: "الفسحة الأولى", start: "07:50", end: "08:10" },
+        { name: "الحصة الثالثة", start: "08:10", end: "08:50" },
+        { name: "الحصة الرابعة", start: "08:50", end: "09:30" },
+        { name: "الفسحة الثانية", start: "09:30", end: "09:50" },
+        { name: "الحصة الخامسة", start: "09:50", end: "10:35" },
+        { name: "الحصة السادسة", start: "10:35", end: "11:20" },
+        { name: "الخروج", start: "11:20", end: "11:45" }
       ];
 
       const schedUpperReg = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
-        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
-        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
-        { name: "الفسحة الأولى", start: "08:00", end: "08:20" },
-        { name: "الحصة الثالثة", start: "08:20", end: "09:05" },
-        { name: "الحصة الرابعة", start: "09:05", end: "09:50" },
-        { name: "الفسحة الثانية", start: "09:50", end: "10:10" },
-        { name: "الحصة الخامسة", start: "10:10", end: "10:50" },
-        { name: "الخروج", start: "10:50", end: "11:00" }
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:50" },
+        { name: "الحصة الثالثة", start: "07:50", end: "08:30" },
+        { name: "الفسحة الأولى", start: "08:30", end: "08:30" },
+        { name: "الحصة الرابعة", start: "08:50", end: "09:30" },
+        { name: "الحصة الخامسة", start: "09:30", end: "10:15" },
+        { name: "الفسحة الثانية", start: "10:15", end: "10:35" },
+        { name: "الحصة السادسة", start: "10:35", end: "11:20" },
+        { name: "الخروج", start: "11:25", end: "11:45" }
       ];
 
       const schedPrimaryWedThu = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
-        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
-        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
-        { name: "الفسحة الأولى", start: "08:00", end: "08:20" },
-        { name: "الحصة الثالثة", start: "08:20", end: "09:05" },
-        { name: "الحصة الرابعة", start: "09:05", end: "09:50" },
-        { name: "الفسحة الثانية", start: "09:50", end: "10:10" },
-        { name: "الحصة الخامسة", start: "10:10", end: "10:45" },
-        { name: "الخروج", start: "10:45", end: "11:00" }
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:45" },
+        { name: "الفسحة الأولى", start: "07:45", end: "08:05" },
+        { name: "الحصة الثالثة", start: "08:05", end: "08:40" },
+        { name: "الحصة الرابعة", start: "08:40", end: "09:15" },
+        { name: "الفسحة الثانية", start: "09:15", end: "09:35" },
+        { name: "الحصة الخامسة", start: "09:35", end: "10:10" },
+        { name: "الحصة السادسة", start: "10:10", end: "10:45" },
+        { name: "الحصة السابعة", start: "10:45", end: "11:20" },
+        { name: "الخروج", start: "11:20", end: "11:45" }
       ];
 
       const schedUpperWedThu = [
         { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
-        { name: "الحصة الأولى", start: "06:30", end: "07:15" },
-        { name: "الحصة الثانية", start: "07:15", end: "08:00" },
-        { name: "الفسحة الأولى", start: "08:00", end: "08:20" },
-        { name: "الحصة الثالثة", start: "08:20", end: "09:05" },
-        { name: "الحصة الرابعة", start: "09:05", end: "09:50" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:45" },
+        { name: "الحصة الثالثة", start: "07:45", end: "08:20" },
+        { name: "الفسحة الأولى", start: "08:20", end: "08:40" },
+        { name: "الحصة الرابعة", start: "08:40", end: "09:15" },
+        { name: "الحصة الخامسة", start: "09:15", end: "09:50" },
         { name: "الفسحة الثانية", start: "09:50", end: "10:10" },
-        { name: "الحصة الخامسة", start: "10:10", end: "10:50" },
-        { name: "الخروج", start: "10:50", end: "11:00" }
+        { name: "الحصة السادسة", start: "10:10", end: "10:45" },
+        { name: "الحصة السابعة", start: "10:45", end: "11:20" },
+        { name: "الخروج", start: "11:25", end: "11:45" }
       ];
 
       /* ========================================================
@@ -622,27 +527,34 @@
       const alertsSunTue = [
         { time: "06:15", advance: 0, duration: 10, audio: "00", text: "🟠 الاصطفاف الصباحي 🟡" },
         { time: "06:30", advance: 0, duration: 7, audio: "01", text: "🟠 تبدأ الآن الحصة الأولى 🟡" },
-        { time: "07:15", advance: 0, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
-        { time: "08:00", advance: 0, duration: 9, audio: "0temp", text: "🟡 انتهت الحصة الثانية 🟠<br> وتبدأ الآن الفسحة الأولى" },
-        { time: "08:20", advance: 0, duration: 9, audio: "0temp", text: "🟠 انتهت الفسحة الأولى، وتبدأ الآن الحصة الثالثة" },
-        { time: "09:05", advance: 0, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
-        { time: "09:50", advance: 0, duration: 9, audio: "0temp", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية 🟡" },
-        { time: "10:10", advance: 0, duration: 9, audio: "0temp", text: "🟠 انتهت الفسحة الثانية، وتبدأ الآن الحصة الخامسة 🟡" },
-        { time: "10:45", advance: 0, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
-        { time: "10:50", advance: 0, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
+        { time: "07:10", advance: 0, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
+        { time: "07:50", advance: 0, duration: 15, audio: "03", text: "انتهت الحصة الثانية<br>🟠 وتبدأ الآن الفسحة الأولى للصفوف الأولية<br>🟡 والحصة الثالثة للصفوف العليا" },
+        { time: "08:10", advance: 0, duration: 12, audio: "04", text: "🟠 انتهت الفسحة الأولى للصفوف الأولية، وتبدأ الآن الحصة الثالثة" },
+        { time: "08:30", advance: 0, duration: 12, audio: "05", text: "🟡 انتهت الحصة الثالثة للصفوف العليا، وتبدأ الآن الفسحة الأولى" },
+        { time: "08:50", advance: 0, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
+        { time: "09:30", advance: 0, duration: 15, audio: "07", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية للصفوف الأولية<br>🟡 والحصة الخامسة للصفوف العليا" },
+        { time: "09:50", advance: 0, duration: 12, audio: "08", text: "🟠 انتهت الفسحة الثانية للصفوف الأولية، وتبدأ الآن الحصة الخامسة" },
+        { time: "10:15", advance: 0, duration: 12, audio: "09", text: "🟡 انتهت الحصة الخامسة للصفوف العليا، وتبدأ الآن الفسحة الثانية" },
+        { time: "10:35", advance: 0, duration: 12, audio: "10", text: "🟠 تبدأ الآن الحصة السادسة 🟡" },
+        { time: "11:20", advance: 0, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
+        { time: "11:25", advance: 0, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
       ];
 
       const alertsWedThu = [
         { time: "06:15", advance: 0, duration: 10, audio: "00", text: "🟠 الاصطفاف الصباحي 🟡" },
         { time: "06:30", advance: 0, duration: 7, audio: "01", text: "🟠 تبدأ الآن الحصة الأولى 🟡" },
-        { time: "07:15", advance: 0, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
-        { time: "08:00", advance: 0, duration: 9, audio: "0temp", text: "🟡 انتهت الحصة الثانية 🟠<br> وتبدأ الآن الفسحة الأولى" },
-        { time: "08:20", advance: 0, duration: 9, audio: "0temp", text: "🟠 انتهت الفسحة الأولى، وتبدأ الآن الحصة الثالثة" },
-        { time: "09:05", advance: 0, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
-        { time: "09:50", advance: 0, duration: 9, audio: "0temp", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية 🟡" },
-        { time: "10:10", advance: 0, duration: 9, audio: "0temp", text: "🟠 انتهت الفسحة الثانية، وتبدأ الآن الحصة الخامسة 🟡" },
-        { time: "10:45", advance: 0, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
-        { time: "10:50", advance: 0, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
+        { time: "07:10", advance: 0, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
+        { time: "07:45", advance: 0, duration: 15, audio: "03", text: "انتهت الحصة الثانية<br>🟠 وتبدأ الآن الفسحة الأولى للصفوف الأولية<br>🟡 والحصة الثالثة للصفوف العليا" },
+        { time: "08:05", advance: 0, duration: 12, audio: "04", text: "🟠 انتهت الفسحة الأولى للصفوف الأولية، وتبدأ الآن الحصة الثالثة" },
+        { time: "08:20", advance: 0, duration: 12, audio: "05", text: "🟡 انتهت الحصة الثالثة للصفوف العليا، وتبدأ الآن الفسحة الأولى" },
+        { time: "08:40", advance: 0, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
+        { time: "09:15", advance: 0, duration: 15, audio: "07", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية للصفوف الأولية<br>🟡 والحصة الخامسة للصفوف العليا" },
+        { time: "09:35", advance: 0, duration: 12, audio: "08", text: "🟠 انتهت الفسحة الثانية للصفوف الأولية، وتبدأ الآن الحصة الخامسة" },
+        { time: "09:50", advance: 0, duration: 12, audio: "09", text: "🟡 انتهت الحصة الخامسة للصفوف العليا، وتبدأ الآن الفسحة الثانية" },
+        { time: "10:10", advance: 0, duration: 12, audio: "10", text: "🟠 تبدأ الآن الحصة السادسة 🟡" },
+        { time: "10:45", advance: 0, duration: 12, audio: "11", text: "🟠 انتهت الحصة السادسة، وتبدأ الآن الحصة السابعة 🟡" },
+        { time: "11:20", advance: 0, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
+        { time: "11:25", advance: 0, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
       ];
 
 
@@ -674,6 +586,7 @@
          ======================================================== */
       let lastTriggeredAlertId = "";
       let alertTimeout = null;
+      let sliderCounter = 0;
       let athanActive = false;
       let athanPlayedKey = null;
       let lastFetchDate = null;
@@ -698,16 +611,11 @@
       }
 
       function updateDate(d) {
-        let days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        
-        let hijriAdjustment = new Date(d.getTime());
-        hijriAdjustment.setDate(hijriAdjustment.getDate() - 1); 
-
+        let days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
           day: "numeric", month: "long", year: "numeric",
-        }).format(hijriAdjustment);
+        }).format(d);
         hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
-        
         let greg = new Intl.DateTimeFormat("ar-EG", {
           day: "numeric", month: "long", year: "numeric",
         }).format(d);
@@ -722,6 +630,7 @@
         if (eventData) {
           boxElement.style.display = "block";
           
+          // تعديل خاص لعرض شاشة "الخروج" بدون مواعيد أو شريط تقدم
           if (eventData.name === "الخروج") {
             boxElement.innerHTML = `
               <div class="status-title" style="color: ${titleColor};">${title}</div>
@@ -762,6 +671,7 @@
         let currentMinutes = now.getHours() * 60 + now.getMinutes();
         let today = now.getDay();
         
+        // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
         let isWedThu = (today === 3 || today === 4);
         let currentPrimarySched = isWedThu ? schedPrimaryWedThu : schedPrimaryReg;
         let currentUpperSched = isWedThu ? schedUpperWedThu : schedUpperReg;
@@ -777,7 +687,7 @@
         if (athanActive) return;
         
         let today = now.getDay();
-        let blocked = [5, 6];
+        let blocked = [5, 6]; // Friday, Saturday
         if (blocked.includes(today)) return;
 
         let isWedThu = (today === 3 || today === 4);
@@ -820,8 +730,8 @@
         
         if (athanActive) return;
         const minutes = now.getHours() * 60 + now.getMinutes();
-        const start = 21 * 60 + 20; 
-        const end = 24 * 60;        
+        const start = 21 * 60 + 20; // 9:20 PM
+        const end = 24 * 60;        // 12:00 AM
 
         if (minutes >= start && minutes < end) {
           if (bgVideo.style.display !== "block") {
@@ -884,25 +794,13 @@
         overlay.classList.remove("show");
         bgVideo.pause();
         
+        // إخفاء السلايدر بتأثير التلاشي
         slider.style.opacity = "0";
-        
-        // إيقاف فيديوهات RV إذا كانت تعمل وقت دخول الأذان
-        if (isRVVideoPlaying) {
-            rvVideo.pause();
-            rvVideo.classList.remove("show");
-            isRVVideoPlaying = false;
-            
-            // تهيئة السلايدر للعودة للشرائح الطبيعية بعد الصلاة
-            currentRVIndex++;
-            if (currentRVIndex > 1) currentRVIndex = 0;
-            slideTimer = 0;
-            normalSlideStreak = 1;
-        }
 
         athanVideo.src = PRAYER_VIDEOS[prayerName];
 
         athanVideo.onloadeddata = () => {
-          athanVideo.classList.add("show");
+          athanVideo.classList.add("show"); // تفعيل Fade In
           athanVideo.play().catch(() => {});
           athanAudio.currentTime = 0;
           athanAudio.play().catch(() => {});
@@ -910,13 +808,13 @@
       }
 
       athanVideo.onended = function () {
-        athanVideo.classList.remove("show"); 
+        athanVideo.classList.remove("show"); // تفعيل Fade Out
         slider.style.opacity = "1";
 
         setTimeout(() => {
           athanVideo.pause();
           athanActive = false;
-        }, 1500); 
+        }, 1500); // الانتظار حتى انتهاء التأثير (1.5 ثانية)
       };
 
       function checkAthanOnline(now) {
@@ -955,12 +853,11 @@
           updateDate(now);
         }
 
-        // نظام المؤقت الجديد الذي يدير السلايدر والصور وفيديوهات RV
-        if (!athanActive && bgVideo.style.display !== "block" && !isRVVideoPlaying) {
-            slideTimer++;
-            if (slideTimer >= currentSlideDuration) {
-                slideTimer = 0;
-                advancePresentation();
+        if (!athanActive && bgVideo.style.display !== "block") {
+            sliderCounter++;
+            if (sliderCounter >= 5) {
+                nextSlide();
+                sliderCounter = 0;
             }
         }
       }
@@ -987,10 +884,6 @@
         for (let i = 1; i <= firstImagesCount; i++) {
           filesToLoad.push(`preimg/Slide${i}.JPG`);
         }
-        
-        // إضافة بعض الملفات الجديدة لقائمة التحميل المسبق لتجنب التأخير
-        filesToLoad.push("preimg/R/R-01.jpg", "video/RV/RV-01.mp4");
-        
         filesToLoad.push("video/P1.mp4", "video/P2.mp4", "video/P3.mp4", "video/P4.mp4", "video/P5.mp4");
         
         for(let i=0; i<=13; i++) {
