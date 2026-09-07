@@ -611,11 +611,16 @@
       }
 
       function updateDate(d) {
-        let days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        let days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        
+        let hijriAdjustment = new Date(d.getTime());
+        hijriAdjustment.setDate(hijriAdjustment.getDate() - 1); 
+
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
           day: "numeric", month: "long", year: "numeric",
-        }).format(d);
+        }).format(hijriAdjustment);
         hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
+        
         let greg = new Intl.DateTimeFormat("ar-EG", {
           day: "numeric", month: "long", year: "numeric",
         }).format(d);
