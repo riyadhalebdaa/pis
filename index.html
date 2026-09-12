@@ -574,11 +574,13 @@
         h = parseInt(h, 10);
         return h + ":" + m;
       }
-      function formatRemainingMinutes(n) {
-        if (n === 1) return "متبقي دقيقة";
-        if (n === 2) return "متبقي دقيقتان";
-        if (n >= 3 && n <= 10) return `متبقي ${toArabicNumber(n)} دقائق`;
-        return `متبقي ${toArabicNumber(n)} دقيقة`;
+      function formatRemainingMinutes(n, nextEventName = "") {
+        let text;
+        if (n === 1) text = "متبقي دقيقة";
+        else if (n === 2) text = "متبقي دقيقتان";
+        else if (n >= 3 && n <= 10) text = `متبقي ${toArabicNumber(n)} دقائق`;
+        else text = `متبقي ${toArabicNumber(n)} دقيقة`;
+        return nextEventName ? `${text} على ${nextEventName}` : text;
       }
 
       /* ========================================================
@@ -614,7 +616,7 @@
         let days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         
         let hijriAdjustment = new Date(d.getTime());
-        hijriAdjustment.setDate(hijriAdjustment.getDate() - 1); 
+        hijriAdjustment.setDate(hijriAdjustment.getDate()); 
 
         let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
           day: "numeric", month: "long", year: "numeric",
@@ -631,11 +633,11 @@
         `;
       }
 
-      function renderStatusBox(boxElement, eventData, title, titleColor, icon, currentMinutes) {
+      function renderStatusBox(boxElement, eventData, title, titleColor, icon, currentMinutes, schedule = []) {
         if (eventData) {
           boxElement.style.display = "block";
           
-          // تعديل خاص لعرض شاشة "الخروج" بدون مواعيد أو شريط تقدم
+          // إبقاء الاستثناء الأصلي للخروج كما هو: بدون مواعيد أو شريط تقدم
           if (eventData.name === "الخروج") {
             boxElement.innerHTML = `
               <div class="status-title" style="color: ${titleColor};">${title}</div>
@@ -653,6 +655,11 @@
           const percent = Math.min((elapsed / totalDuration) * 100, 100);
           const isEndingSoon = remaining <= 5;
 
+          // تحديد المدخل التالي مباشرة من الجدول نفسه دون تجاوز أي مدخل
+          const currentIndex = schedule.indexOf(eventData);
+          const nextEvent = schedule[currentIndex + 1];
+          const nextEventName = nextEvent ? nextEvent.name : "";
+
           boxElement.innerHTML = `
             <div class="status-title" style="color: ${titleColor};">${title}</div>
             <div>${icon} الآن ${eventData.name}</div>
@@ -664,7 +671,7 @@
                 </div>
                 <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(eventData.end))}</span>
               </div>
-              <div class="remaining-time">${formatRemainingMinutes(remaining)}</div>
+              <div class="remaining-time">${formatRemainingMinutes(remaining, nextEventName)}</div>
             </div>
           `;
         } else {
@@ -675,6 +682,13 @@
       function checkStatusBoxes(now) {
         let currentMinutes = now.getHours() * 60 + now.getMinutes();
         let today = now.getDay();
+
+        // تعطيل صناديق الحالة يومي الجمعة والسبت
+        if (today === 5 || today === 6) {
+          statusBoxPrimary.style.display = "none";
+          statusBoxUpper.style.display = "none";
+          return;
+        }
         
         // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
         let isWedThu = (today === 3 || today === 4);
@@ -684,8 +698,8 @@
         let currentPrimary = currentPrimarySched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
         let currentUpper = currentUpperSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
 
-        renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", "#5d0413", "🟠", currentMinutes);
-        renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", "#d04931", "🟡", currentMinutes);
+        renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", "#5d0413", "🟠", currentMinutes, currentPrimarySched);
+        renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", "#d04931", "🟡", currentMinutes, currentUpperSched);
       }
 
       function checkAlerts(now) {
@@ -693,7 +707,14 @@
         
         let today = now.getDay();
         let blocked = [5, 6]; // Friday, Saturday
-        if (blocked.includes(today)) return;
+        if (blocked.includes(today)) {
+          if (alertTimeout) {
+            clearTimeout(alertTimeout);
+            alertTimeout = null;
+          }
+          overlay.classList.remove("show");
+          return;
+        }
 
         let isWedThu = (today === 3 || today === 4);
         let activeAlerts = isWedThu ? alertsWedThu : alertsSunTue;
