@@ -618,7 +618,7 @@
         let hijriAdjustment = new Date(d.getTime());
         hijriAdjustment.setDate(hijriAdjustment.getDate()); 
 
-        let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+        let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
           day: "numeric", month: "long", year: "numeric",
         }).format(hijriAdjustment);
         hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
@@ -785,7 +785,7 @@
         try {
           const today = new Date();
           const day = today.getDate();
-          const month = today.getMonth() + 1;
+          const month = today.getMonth();
           const year = today.getFullYear();
           const response = await fetch(
             `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=25.9047&longitude=45.3566&method=4`,
