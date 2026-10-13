@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School Display - Optimized</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial;
+        background: #000;
+        overflow: hidden;
+        visibility: visible;
+      }
+
+      /* LOADING */
+      #loadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px;
+        z-index: 9000;
+        direction: rtl;
+        transition: opacity 0.8s ease;
+      }
+      #progressContainer {
+        width: clamp(260px, 45vw, 400px);
+        max-width: calc(100vw - 40px);
+        height: 20px;
+        background: #333;
+        margin-top: 25px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      #progressBar {
+        height: 100%;
+        width: 0%;
+        background: #00c853;
+        transition: width 0.3s;
+      }
+      #progressText {
+        margin-top: 15px;
+        font-size: 22px;
+      }
+
+      /* VIDEO */
+      #bgVideo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 1.2s ease;
+        display: none;
+      }
+
+      /* SLIDER */
+      .slider {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        opacity: 1;
+        transition: opacity 1.2s ease;
+      }
+      .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 1.5s ease-in-out;
+      }
+      .slide.active {
+        opacity: 1;
+      }
+
+/* LOGO */
+      .top-right-logo {
+        position: absolute;
+        top: 0;
+        right: 0;
+        /* استخدام نسبة مئوية من عرض الشاشة (مثلاً 30%) */
+        width: clamp(250px, 11vw, 839px);
+        max-width: 45vw;
+        min-width: 0;
+        
+        height: auto; /* يحافظ على النسبة والتناسب بين الطول والعرض تلقائياً */
+        z-index: 5000;
+      }
+
+      /* CLOCK */
+      .clock {
+        position: absolute;
+        top: clamp(20px, 2.1vw, 40px);
+        left: clamp(20px, 2.1vw, 40px);
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(6px);
+        border: 6px solid rgba(0, 0, 0, 0.75);
+        box-shadow:
+          0 0 0 6px rgba(255, 255, 255, 0.6),
+          0 15px 35px rgba(0, 0, 0, 0.25);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5000;
+      }
+      .center {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: #000;
+        border-radius: 50%;
+        z-index: 10;
+      }
+      .clock-logo {
+        position: absolute;
+        width: 50px;
+        z-index: 2;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+      .hand {
+        position: absolute;
+        bottom: 50%;
+        transform-origin: bottom;
+        border-radius: 10px;
+        z-index: 5;
+      }
+      .hour {
+        width: 7px;
+        height: 65px;
+        background: #111;
+      }
+      .minute {
+        width: 4px;
+        height: 95px;
+        background: #333;
+      }
+      .second {
+        width: 2px;
+        height: 105px;
+        background: #d40000;
+      }
+      .number {
+        position: absolute;
+        font-size: 22px;
+        font-weight: 500;
+        color: #111;
+        transform: translate(-50%, -50%);
+        z-index: 6;
+      }
+      .number.bold {
+        font-weight: 800;
+        font-size: 29px;
+      }
+      .tick {
+        position: absolute;
+        width: 3px;
+        height: 7px;
+        background: #222;
+        top: 5px;
+        left: 49%;
+        transform-origin: 50% 110px;
+      }
+      .tick.small {
+        height: 3px;
+        width: 2px;
+        background: #555;
+      }
+
+      /* STATUS CONTAINER */
+      .status-container {
+        position: absolute;
+        bottom: clamp(20px, 2.1vw, 40px);
+        right: clamp(20px, 2.1vw, 40px);
+        display: flex;
+        gap: 20px;
+        z-index: 5000;
+        direction: rtl;
+      }
+
+      .status {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 18px 25px;
+        border-radius: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        display: none;
+        width: 260px;
+      }
+
+      .status-title {
+        font-size: 16px;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 6px;
+        font-weight: 900;
+      }
+
+      .status-time {
+        margin-top: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .time-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        direction: rtl;
+      }
+
+      .progress-container-small {
+        flex: 1;
+        height: 8px;
+        background: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .progress-bar-small {
+        height: 100%;
+        width: 0%;
+        background: #00c853;
+        transition: width 1s linear, background 0.3s;
+      }
+
+      .progress-bar-small.ending {
+        background: #f34141;
+        animation: pulseBar 1s infinite;
+      }
+
+      @keyframes pulseBar {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+      }
+
+      .remaining-time {
+        margin-top: 8px;
+        font-size: 17px;
+        color: #000000;
+        font-weight: bold;
+      }
+
+      .time-text {
+        font-size: 17px;
+        font-weight: bold;
+      }
+
+      /* DATE */
+      .date-box {
+        position: absolute;
+        bottom: clamp(20px, 2.1vw, 40px);
+        left: clamp(20px, 2.1vw, 40px);
+        background: rgba(255, 255, 255, 0.95);
+        padding: 18px 30px;
+        border-radius: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        direction: rtl;
+        z-index: 5000;
+      }
+
+      /* OVERLAY (تم تعديل التأثير ليدعم Fade Out) */
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-size: 44px;
+        font-weight: bold;
+        line-height: 1.8;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+        z-index: 6000;
+        direction: rtl;
+        padding: 40px;
+      }
+      .overlay.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.6s ease, visibility 0s linear 0s;
+      }
+
+      /* ATHAN VIDEO (تم التعديل لدعم Fade In / Fade Out) */
+      #athanVideo {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 4000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1.5s ease, visibility 0s linear 1.5s;
+      }
+      #athanVideo.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 1.5s ease, visibility 0s linear 0s;
+      }
+
+      #athanWhiteFade {
+        position: fixed;
+        inset: 0;
+        background: white;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 9998;
+        transition: opacity 2.5s ease;
+      }
+
+      /* تحسين التناسب على الشاشات الأصغر مع الحفاظ على التصميم الأساسي */
+      @media (max-width: 1200px) {
+        .clock {
+          transform: scale(0.84);
+          transform-origin: top left;
+        }
+        .status-container {
+          gap: 12px;
+        }
+        .status {
+          width: 230px;
+          padding: 14px 16px;
+          font-size: 18px;
+        }
+        .status-title,
+        .status-time {
+          font-size: 15px;
+        }
+        .remaining-time,
+        .time-text {
+          font-size: 15px;
+        }
+        .date-box {
+          padding: 14px 18px;
+          font-size: 18px;
+        }
+        .overlay {
+          font-size: clamp(28px, 3vw, 40px);
+          padding: 24px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .status-container {
+          gap: 8px;
+          right: 12px;
+          bottom: 12px;
+        }
+        .status {
+          width: min(42vw, 210px);
+          padding: 10px 12px;
+          border-radius: 12px;
+        }
+        .date-box {
+          left: 12px;
+          bottom: 12px;
+          padding: 10px 12px;
+          font-size: 15px;
+        }
+        .top-right-logo {
+          width: clamp(150px, 22vw, 220px);
+        }
+        .clock {
+          top: 12px;
+          left: 12px;
+          transform: scale(0.68);
+          transform-origin: top left;
+        }
+      }
+
+      @media (max-height: 700px) {
+        .status-container,
+        .date-box {
+          bottom: 12px;
+        }
+        .status {
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
+      }
+
+      #progressText {
+        text-align: center;
+        max-width: calc(100vw - 32px);
+      }
+    </style>
+  </head>
+  <body>
+    <video id="bgVideo" muted loop playsinline>
+      <source src="video/rc.mp4" type="video/mp4" />
+    </video>
+
+    <div id="loadingScreen">
+      <div>⏳ جاري تحميل النظام...</div>
+      <div id="progressContainer"><div id="progressBar"></div></div>
+      <div id="progressText">0%</div>
+    </div>
+
+    <img src="reslogo.png" class="top-right-logo" alt="شعار المدرسة" />
+    
+    <div class="slider" id="slider"></div>
+
+    <div class="clock">
+      <img src="logo_without_texts.png" class="clock-logo" alt="" aria-hidden="true" />
+      <div class="hand hour"></div>
+      <div class="hand minute"></div>
+      <div class="hand second"></div>
+      <div class="center"></div>
+    </div>
+
+    <div class="status-container">
+      <div class="status" id="statusBoxPrimary"></div>
+      <div class="status" id="statusBoxUpper"></div>
+    </div>
+
+    <div class="date-box" id="dateBox"></div>
+    <div class="overlay" id="overlay"></div>
+    <div id="athanWhiteFade"></div>
+
+    <video id="athanVideo" playsinline></video>
+    <audio id="athanAudio" src="audio/athan.MP3"></audio>
+
+    <script>
+      /* ========================================================
+         CONFIGURATION
+         ======================================================== */
+      const ENABLE_NIGHT_MODE = false;
+
+      /* ========================================================
+         SETUP: SOUNDS & DOM ELEMENTS
+         ======================================================== */
+      const audioFiles = {};
+      for (let i = 0; i <= 13; i++) {
+        let key = i < 10 ? "0" + i : i.toString();
+        audioFiles[key] = new Audio(`audio/${key}.MP3`);
+        audioFiles[key].preload = "auto";
+      }
+
+      const dateBox = document.getElementById("dateBox");
+      const statusBoxPrimary = document.getElementById("statusBoxPrimary");
+      const statusBoxUpper = document.getElementById("statusBoxUpper");
+      const overlay = document.getElementById("overlay");
+      const bgVideo = document.getElementById("bgVideo");
+      const athanVideo = document.getElementById("athanVideo");
+      const athanAudio = document.getElementById("athanAudio");
+      const slider = document.getElementById("slider");
+
+      // Clock Elements
+      const hourEl = document.querySelector(".hour");
+      const minuteEl = document.querySelector(".minute");
+      const secondEl = document.querySelector(".second");
+      const clockEl = document.querySelector(".clock");
+
+      /* Draw Clock Face */
+      const nums = ["١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩", "١٠", "١١", "١٢"];
+      for (let i = 1; i <= 12; i++) {
+        let n = document.createElement("div");
+        n.className = "number";
+        if ([3, 6, 9, 12].includes(i)) n.classList.add("bold");
+        n.textContent = nums[i - 1];
+        let angle = (i * 30 * Math.PI) / 180;
+        let r = 87;
+        n.style.left = 113 + r * Math.sin(angle) + "px";
+        n.style.top = 116 - r * Math.cos(angle) + "px";
+        clockEl.appendChild(n);
+      }
+      for (let i = 0; i < 60; i++) {
+        let t = document.createElement("div");
+        t.className = "tick" + (i % 5 ? " small" : "");
+        t.style.transform = `rotate(${i * 6}deg)`;
+        clockEl.appendChild(t);
+      }
+
+      /* ========================================================
+         SLIDER SETUP
+         ======================================================== */
+      const totalImages = 325;
+      let currentIndex = 1;
+      let img1 = document.createElement("img");
+      let img2 = document.createElement("img");
+
+      img1.className = "slide active";
+      img2.className = "slide";
+      slider.appendChild(img1);
+      slider.appendChild(img2);
+
+      function getImagePath(index) {
+        return `preimg/Slide${index}.JPG`;
+      }
+      img1.src = getImagePath(currentIndex);
+
+      let slideInProgress = false;
+
+      function nextSlide() {
+        if (slideInProgress || athanActive || bgVideo.style.display === "block") return;
+
+        let nextIndex = currentIndex + 1;
+        if (nextIndex > totalImages) nextIndex = 1;
+
+        const targetImage = img2;
+        slideInProgress = true;
+        targetImage.onload = () => {
+          targetImage.onload = null;
+          targetImage.onerror = null;
+          targetImage.classList.add("active");
+          img1.classList.remove("active");
+          [img1, img2] = [img2, img1];
+          currentIndex = nextIndex;
+          slideInProgress = false;
+        };
+        targetImage.onerror = () => {
+          targetImage.onload = null;
+          targetImage.onerror = null;
+          currentIndex = nextIndex; // تجاوز الصورة المتعذرة بدل التوقف عندها
+          slideInProgress = false;
+          console.warn(`تعذر تحميل الشريحة: ${getImagePath(nextIndex)}`);
+        };
+        targetImage.src = getImagePath(nextIndex);
+      }
+
+      img1.onerror = () => {
+        img1.onerror = null;
+        console.warn("تعذر تحميل الشريحة الأولى؛ ستتم محاولة عرض الشريحة التالية.");
+        nextSlide();
+      };
+
+      /* ========================================================
+         DATA: DUAL SCHEDULES (For Status Boxes Only)
+         ======================================================== */
+      const schedPrimaryReg = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:50" },
+        { name: "الفسحة الأولى", start: "07:50", end: "08:10" },
+        { name: "الحصة الثالثة", start: "08:10", end: "08:50" },
+        { name: "الحصة الرابعة", start: "08:50", end: "09:30" },
+        { name: "الفسحة الثانية", start: "09:30", end: "09:50" },
+        { name: "الحصة الخامسة", start: "09:50", end: "10:35" },
+        { name: "الحصة السادسة", start: "10:35", end: "11:20" },
+        { name: "الخروج", start: "11:20", end: "11:45" }
+      ];
+
+      const schedUpperReg = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:50" },
+        { name: "الحصة الثالثة", start: "07:50", end: "08:30" },
+        { name: "الفسحة الأولى", start: "08:30", end: "08:50" },
+        { name: "الحصة الرابعة", start: "08:50", end: "09:30" },
+        { name: "الحصة الخامسة", start: "09:30", end: "10:15" },
+        { name: "الفسحة الثانية", start: "10:15", end: "10:35" },
+        { name: "الحصة السادسة", start: "10:35", end: "11:25" },
+        { name: "الخروج", start: "11:25", end: "11:45" }
+      ];
+
+      const schedPrimaryWedThu = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:45" },
+        { name: "الفسحة الأولى", start: "07:45", end: "08:05" },
+        { name: "الحصة الثالثة", start: "08:05", end: "08:40" },
+        { name: "الحصة الرابعة", start: "08:40", end: "09:15" },
+        { name: "الفسحة الثانية", start: "09:15", end: "09:35" },
+        { name: "الحصة الخامسة", start: "09:35", end: "10:10" },
+        { name: "الحصة السادسة", start: "10:10", end: "10:45" },
+        { name: "الحصة السابعة", start: "10:45", end: "11:20" },
+        { name: "الخروج", start: "11:20", end: "11:45" }
+      ];
+
+      const schedUpperWedThu = [
+        { name: "الاصطفاف الصباحي", start: "06:15", end: "06:30" },
+        { name: "الحصة الأولى", start: "06:30", end: "07:10" },
+        { name: "الحصة الثانية", start: "07:10", end: "07:45" },
+        { name: "الحصة الثالثة", start: "07:45", end: "08:20" },
+        { name: "الفسحة الأولى", start: "08:20", end: "08:40" },
+        { name: "الحصة الرابعة", start: "08:40", end: "09:15" },
+        { name: "الحصة الخامسة", start: "09:15", end: "09:50" },
+        { name: "الفسحة الثانية", start: "09:50", end: "10:10" },
+        { name: "الحصة السادسة", start: "10:10", end: "10:45" },
+        { name: "الحصة السابعة", start: "10:45", end: "11:25" },
+        { name: "الخروج", start: "11:25", end: "11:45" }
+      ];
+
+      /* ========================================================
+         DATA: CUSTOM ALERTS (TRANSITIONS)
+         ======================================================== */
+      const alertsSunTue = [
+        { time: "06:15", advance: 0, duration: 10, audio: "00", text: "🟠 الاصطفاف الصباحي 🟡" },
+        { time: "06:30", advance: 0, duration: 7, audio: "01", text: "🟠 تبدأ الآن الحصة الأولى 🟡" },
+        { time: "07:10", advance: 0, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
+        { time: "07:50", advance: 0, duration: 15, audio: "03", text: "انتهت الحصة الثانية<br>🟠 وتبدأ الآن الفسحة الأولى للصفوف الأولية<br>🟡 والحصة الثالثة للصفوف العليا" },
+        { time: "08:10", advance: 0, duration: 12, audio: "04", text: "🟠 انتهت الفسحة الأولى للصفوف الأولية، وتبدأ الآن الحصة الثالثة" },
+        { time: "08:30", advance: 0, duration: 12, audio: "05", text: "🟡 انتهت الحصة الثالثة للصفوف العليا، وتبدأ الآن الفسحة الأولى" },
+        { time: "08:50", advance: 0, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
+        { time: "09:30", advance: 0, duration: 15, audio: "07", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية للصفوف الأولية<br>🟡 والحصة الخامسة للصفوف العليا" },
+        { time: "09:50", advance: 0, duration: 12, audio: "08", text: "🟠 انتهت الفسحة الثانية للصفوف الأولية، وتبدأ الآن الحصة الخامسة" },
+        { time: "10:15", advance: 0, duration: 12, audio: "09", text: "🟡 انتهت الحصة الخامسة للصفوف العليا، وتبدأ الآن الفسحة الثانية" },
+        { time: "10:35", advance: 0, duration: 12, audio: "10", text: "🟠 تبدأ الآن الحصة السادسة 🟡" },
+        { time: "11:20", advance: 0, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
+        { time: "11:25", advance: 0, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
+      ];
+
+      const alertsWedThu = [
+        { time: "06:15", advance: 0, duration: 10, audio: "00", text: "🟠 الاصطفاف الصباحي 🟡" },
+        { time: "06:30", advance: 0, duration: 7, audio: "01", text: "🟠 تبدأ الآن الحصة الأولى 🟡" },
+        { time: "07:10", advance: 0, duration: 11, audio: "02", text: "🟠 انتهت الحصة الأولى، وتبدأ الآن الحصة الثانية 🟡" },
+        { time: "07:45", advance: 0, duration: 15, audio: "03", text: "انتهت الحصة الثانية<br>🟠 وتبدأ الآن الفسحة الأولى للصفوف الأولية<br>🟡 والحصة الثالثة للصفوف العليا" },
+        { time: "08:05", advance: 0, duration: 12, audio: "04", text: "🟠 انتهت الفسحة الأولى للصفوف الأولية، وتبدأ الآن الحصة الثالثة" },
+        { time: "08:20", advance: 0, duration: 12, audio: "05", text: "🟡 انتهت الحصة الثالثة للصفوف العليا، وتبدأ الآن الفسحة الأولى" },
+        { time: "08:40", advance: 0, duration: 10, audio: "06", text: "🟠 تبدأ الآن الحصة الرابعة 🟡" },
+        { time: "09:15", advance: 0, duration: 15, audio: "07", text: "انتهت الحصة الرابعة<br>🟠 وتبدأ الآن الفسحة الثانية للصفوف الأولية<br>🟡 والحصة الخامسة للصفوف العليا" },
+        { time: "09:35", advance: 0, duration: 12, audio: "08", text: "🟠 انتهت الفسحة الثانية للصفوف الأولية، وتبدأ الآن الحصة الخامسة" },
+        { time: "09:50", advance: 0, duration: 12, audio: "09", text: "🟡 انتهت الحصة الخامسة للصفوف العليا، وتبدأ الآن الفسحة الثانية" },
+        { time: "10:10", advance: 0, duration: 12, audio: "10", text: "🟠 تبدأ الآن الحصة السادسة 🟡" },
+        { time: "10:45", advance: 0, duration: 12, audio: "11", text: "🟠 انتهت الحصة السادسة، وتبدأ الآن الحصة السابعة 🟡" },
+        { time: "11:20", advance: 0, duration: 10, audio: "12", text: "🟠 الآن خروج الصفوف الأولية" },
+        { time: "11:25", advance: 0, duration: 10, audio: "13", text: "🟡 الآن خروج الصفوف العليا" }
+      ];
+
+
+      /* HELPERS */
+      function toMin(t) {
+        let [a, b] = t.split(":").map(Number);
+        return a * 60 + b;
+      }
+      function toArabicDigits(s) {
+        return s.replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+      }
+      function toArabicNumber(num) {
+        return num.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+      }
+
+      function getLocalDateKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+      function formatTimeWithoutLeadingZero(timeStr) {
+        let [h, m] = timeStr.split(":");
+        h = parseInt(h, 10);
+        return h + ":" + m;
+      }
+      function formatRemainingMinutes(n, nextEventName = "") {
+        let text;
+        if (n === 1) text = "متبقي دقيقة";
+        else if (n === 2) text = "متبقي دقيقتان";
+        else if (n >= 3 && n <= 10) text = `متبقي ${toArabicNumber(n)} دقائق`;
+        else text = `متبقي ${toArabicNumber(n)} دقيقة`;
+        return nextEventName ? `${text} على ${nextEventName}` : text;
+      }
+
+      /* ========================================================
+         STATE VARIABLES
+         ======================================================== */
+      let alertTimeout = null;
+      let sliderCounter = 0;
+      let athanActive = false;
+      let athanRunId = 0;
+      let athanFinishTimer = null;
+      let athanFinishingRun = 0;
+      let athanPlayedKey = null;
+      let prayerTimes = null;
+      let prayerTimesDate = null;
+      let prayerFetchInProgress = false;
+      let lastPrayerFetchAttempt = 0;
+      let lastRenderedDateKey = "";
+      let triggeredAlertDay = "";
+      const triggeredAlertKeys = new Set();
+
+      const PRAYER_VIDEOS = {
+        Fajr: "video/P1.mp4",
+        Dhuhr: "video/P2.mp4",
+        Asr: "video/P3.mp4",
+        Maghrib: "video/P4.mp4",
+        Isha: "video/P5.mp4",
+      };
+
+      /* ========================================================
+         CORE FUNCTIONS
+         ======================================================== */
+
+      function updateClock(d) {
+        hourEl.style.transform = `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() * 0.5}deg)`;
+        minuteEl.style.transform = `rotate(${d.getMinutes() * 6}deg)`;
+        secondEl.style.transform = `rotate(${d.getSeconds() * 6}deg)`;
+      }
+
+      function updateDate(d) {
+        let days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        
+        let hijriAdjustment = new Date(d.getTime());
+        hijriAdjustment.setDate(hijriAdjustment.getDate()); 
+
+        let hijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+          day: "numeric", month: "long", year: "numeric",
+        }).format(hijriAdjustment);
+        hijri = hijri.replace(/\s?هـ/, "").trim() + "هـ";
+        
+        let greg = new Intl.DateTimeFormat("ar-EG", {
+          day: "numeric", month: "long", year: "numeric",
+        }).format(d);
+        
+        dateBox.innerHTML = `
+          <div>${days[d.getDay()]} ${toArabicDigits(hijri)}</div>
+          <div style="margin-top:8px;">الموافق ${toArabicDigits(greg)}م</div>
+        `;
+      }
+
+      function renderStatusBox(boxElement, eventData, title, titleColor, icon, currentMinutes, schedule = []) {
+        if (eventData) {
+          boxElement.style.display = "block";
+          
+          // إبقاء الاستثناء الأصلي للخروج كما هو: بدون مواعيد أو شريط تقدم
+          if (eventData.name === "الخروج") {
+            boxElement.innerHTML = `
+              <div class="status-title" style="color: ${titleColor};">${title}</div>
+              <div style="margin-top: 15px; font-size: 22px; font-weight: bold;">${icon} الآن ${eventData.name}</div>
+            `;
+            return;
+          }
+
+          const startMin = toMin(eventData.start);
+          const endMin = toMin(eventData.end);
+          const totalDuration = endMin - startMin;
+          const elapsed = currentMinutes - startMin;
+          const remaining = endMin - currentMinutes;
+          
+          const percent = Math.min((elapsed / totalDuration) * 100, 100);
+          const isEndingSoon = remaining <= 5;
+
+          // تحديد المدخل التالي مباشرة من الجدول نفسه دون تجاوز أي مدخل
+          const currentIndex = schedule.indexOf(eventData);
+          const nextEvent = schedule[currentIndex + 1];
+          const nextEventName = nextEvent ? nextEvent.name : "";
+
+          boxElement.innerHTML = `
+            <div class="status-title" style="color: ${titleColor};">${title}</div>
+            <div>${icon} الآن ${eventData.name}</div>
+            <div class="status-time">
+              <div class="time-row">
+                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(eventData.start))}</span>
+                <div class="progress-container-small">
+                  <div class="progress-bar-small ${isEndingSoon ? "ending" : ""}" style="width:${percent}%"></div>
+                </div>
+                <span class="time-text">${toArabicNumber(formatTimeWithoutLeadingZero(eventData.end))}</span>
+              </div>
+              <div class="remaining-time">${formatRemainingMinutes(remaining, nextEventName)}</div>
+            </div>
+          `;
+        } else {
+          boxElement.style.display = "none";
+        }
+      }
+
+      function checkStatusBoxes(now) {
+        let currentMinutes = now.getHours() * 60 + now.getMinutes();
+        let today = now.getDay();
+
+        // تعطيل صناديق الحالة يومي الجمعة والسبت
+        if (today === 5 || today === 6) {
+          statusBoxPrimary.style.display = "none";
+          statusBoxUpper.style.display = "none";
+          return;
+        }
+        
+        // Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu
+        let isWedThu = (today === 3 || today === 4);
+        let currentPrimarySched = isWedThu ? schedPrimaryWedThu : schedPrimaryReg;
+        let currentUpperSched = isWedThu ? schedUpperWedThu : schedUpperReg;
+
+        let currentPrimary = currentPrimarySched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+        let currentUpper = currentUpperSched.find((e) => currentMinutes >= toMin(e.start) && currentMinutes < toMin(e.end));
+
+        renderStatusBox(statusBoxPrimary, currentPrimary, "الصفوف الأولية", "#5d0413", "🟠", currentMinutes, currentPrimarySched);
+        renderStatusBox(statusBoxUpper, currentUpper, "الصفوف العليا", "#d04931", "🟡", currentMinutes, currentUpperSched);
+      }
+
+      function checkAlerts(now) {
+        if (athanActive) return;
+
+        const todayKey = getLocalDateKey(now);
+        if (triggeredAlertDay !== todayKey) {
+          triggeredAlertKeys.clear();
+          triggeredAlertDay = todayKey;
+        }
+
+        const today = now.getDay();
+        const blockedDays = [5, 6]; // الجمعة والسبت
+        if (blockedDays.includes(today)) {
+          if (alertTimeout) {
+            clearTimeout(alertTimeout);
+            alertTimeout = null;
+          }
+          overlay.classList.remove("show");
+          Object.values(audioFiles).forEach((sound) => {
+            sound.pause();
+            sound.currentTime = 0;
+          });
+          return;
+        }
+
+        const isWedThu = today === 3 || today === 4;
+        const activeAlerts = isWedThu ? alertsWedThu : alertsSunTue;
+        const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        const scheduleKey = isWedThu ? "wt" : "st";
+
+        activeAlerts.forEach((alert, index) => {
+          const targetSeconds = toMin(alert.time) * 60;
+          const lateness = nowSeconds - targetSeconds;
+          // يسمح بهامش قصير لمعالجة تأخر مؤقت المتصفح، دون تشغيل إعلان قديم بعد وقت طويل.
+          if (lateness >= 0 && lateness < 15) {
+            const alertId = `${todayKey}-${scheduleKey}-${index}`;
+            if (!triggeredAlertKeys.has(alertId)) {
+              triggeredAlertKeys.add(alertId);
+              showOverlayAlert(alert);
+            }
+          }
+        });
+      }
+
+      function showOverlayAlert(alert) {
+        overlay.innerHTML = `<div>${alert.text}</div>`;
+        overlay.classList.add("show");
+
+        const sound = audioFiles[alert.audio];
+        Object.values(audioFiles).forEach((otherSound) => {
+          if (otherSound !== sound) {
+            otherSound.pause();
+            otherSound.currentTime = 0;
+          }
+        });
+
+        if (sound) {
+          sound.currentTime = 0;
+          sound.play().catch((error) => {
+            console.warn(`تعذر تشغيل صوت التنبيه ${alert.audio}:`, error);
+          });
+        }
+
+        if (alertTimeout) clearTimeout(alertTimeout);
+        alertTimeout = setTimeout(() => {
+          overlay.classList.remove("show");
+          alertTimeout = null;
+        }, alert.duration * 1000);
+      }
+
+      function controlNightMode(now) {
+        if (!ENABLE_NIGHT_MODE || athanActive) return;
+
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const start = 21 * 60 + 20;
+        const end = 24 * 60;
+        const shouldShowNightVideo = minutes >= start && minutes < end;
+
+        if (shouldShowNightVideo) {
+          if (bgVideo.style.display !== "block") {
+            bgVideo.style.display = "block";
+            bgVideo.style.opacity = "0";
+            bgVideo.play().catch((error) => {
+              console.warn("تعذر تشغيل فيديو الوضع الليلي:", error);
+            });
+            requestAnimationFrame(() => { bgVideo.style.opacity = "1"; });
+          }
+          slider.style.opacity = "0";
+          if (slider.style.display !== "none") {
+            setTimeout(() => {
+              if (ENABLE_NIGHT_MODE && bgVideo.style.display === "block") slider.style.display = "none";
+            }, 1200);
+          }
+        } else {
+          if (bgVideo.style.display !== "none") {
+            bgVideo.style.opacity = "0";
+            slider.style.display = "block";
+            slider.style.opacity = "1";
+            setTimeout(() => {
+              if (bgVideo.style.opacity === "0") {
+                bgVideo.pause();
+                bgVideo.style.display = "none";
+              }
+            }, 1200);
+          } else {
+            slider.style.display = "block";
+            slider.style.opacity = "1";
+          }
+        }
+      }
+
+      /* ========================================================
+         ATHAN SYSTEM
+         ======================================================== */
+      async function fetchPrayerTimes() {
+        if (prayerFetchInProgress) return;
+        const requestDate = new Date();
+        const requestDateKey = getLocalDateKey(requestDate);
+        prayerFetchInProgress = true;
+        lastPrayerFetchAttempt = Date.now();
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        try {
+          // واجهة AlAdhan تتطلب الشهر من 1 إلى 12، وليس من 0 إلى 11.
+          const day = requestDate.getDate();
+          const month = requestDate.getMonth() + 1;
+          const year = requestDate.getFullYear();
+          const url = `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=25.9047&longitude=45.3566&method=4`;
+          const response = await fetch(url, { signal: controller.signal, cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = await response.json();
+          const timings = data && data.data && data.data.timings;
+          if (data.code !== 200 || !timings) throw new Error("استجابة أوقات الصلاة غير مكتملة");
+
+          function timeToSeconds(value) {
+            const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+            if (!match) throw new Error(`صيغة وقت غير صحيحة: ${value}`);
+            const hour = Number(match[1]);
+            const minute = Number(match[2]);
+            if (hour > 23 || minute > 59) throw new Error(`وقت خارج النطاق: ${value}`);
+            return hour * 3600 + minute * 60;
+          }
+
+          const nextPrayerTimes = {
+            Fajr: timeToSeconds(timings.Fajr),
+            Dhuhr: timeToSeconds(timings.Dhuhr),
+            Asr: timeToSeconds(timings.Asr),
+            Maghrib: timeToSeconds(timings.Maghrib),
+            Isha: timeToSeconds(timings.Isha),
+          };
+
+          // لا نستخدم نتائج اليوم السابق إذا تغيّر التاريخ أثناء انتظار الشبكة.
+          if (getLocalDateKey(new Date()) === requestDateKey) {
+            prayerTimes = nextPrayerTimes;
+            prayerTimesDate = requestDateKey;
+          }
+        } catch (error) {
+          console.warn("تعذر تحديث أوقات الصلاة؛ ستتم إعادة المحاولة لاحقًا:", error);
+        } finally {
+          clearTimeout(timeoutId);
+          prayerFetchInProgress = false;
+        }
+      }
+
+      function playAthan(prayerName) {
+        const videoPath = PRAYER_VIDEOS[prayerName];
+        if (!videoPath) return;
+
+        athanRunId += 1;
+        const thisRun = athanRunId;
+        athanFinishingRun = 0;
+        athanActive = true;
+
+        Object.values(audioFiles).forEach((sound) => {
+          sound.pause();
+          sound.currentTime = 0;
+        });
+        if (alertTimeout) {
+          clearTimeout(alertTimeout);
+          alertTimeout = null;
+        }
+        overlay.classList.remove("show");
+
+        bgVideo.pause();
+        bgVideo.style.opacity = "0";
+        slider.style.display = "block";
+        slider.style.opacity = "0";
+
+        athanVideo.pause();
+        athanVideo.classList.remove("show");
+        athanVideo.onerror = null;
+        athanVideo.onloadeddata = null;
+        athanVideo.onended = null;
+        athanAudio.onerror = null;
+        athanAudio.onended = null;
+
+        let videoFailed = false;
+        let audioFailed = false;
+
+        const finishAthan = () => {
+          if (thisRun !== athanRunId || athanFinishingRun === thisRun) return;
+          athanFinishingRun = thisRun;
+          if (athanFinishTimer) {
+            clearTimeout(athanFinishTimer);
+            athanFinishTimer = null;
+          }
+
+          athanVideo.classList.remove("show");
+          athanAudio.pause();
+          athanAudio.currentTime = 0;
+          slider.style.display = "block";
+
+          setTimeout(() => {
+            if (thisRun !== athanRunId) return;
+            athanVideo.pause();
+            athanActive = false;
+            const now = new Date();
+            const minutes = now.getHours() * 60 + now.getMinutes();
+            if (ENABLE_NIGHT_MODE && minutes >= 21 * 60 + 20) {
+              bgVideo.style.display = "block";
+              bgVideo.style.opacity = "1";
+              slider.style.opacity = "0";
+              bgVideo.play().catch((error) => console.warn("تعذر استئناف فيديو الليل:", error));
+            } else {
+              bgVideo.pause();
+              bgVideo.style.display = "none";
+              bgVideo.style.opacity = "0";
+              slider.style.opacity = "1";
+            }
+          }, 1500);
+        };
+
+        athanVideo.onloadeddata = () => {
+          if (thisRun !== athanRunId) return;
+          athanVideo.classList.add("show");
+          athanVideo.play().catch((error) => {
+            console.warn(`تعذر تشغيل فيديو الأذان ${prayerName}:`, error);
+            videoFailed = true;
+            athanVideo.classList.remove("show");
+            if (audioFailed) finishAthan();
+          });
+        };
+
+        athanVideo.onerror = () => {
+          if (thisRun !== athanRunId) return;
+          videoFailed = true;
+          athanVideo.classList.remove("show");
+          console.warn(`تعذر تحميل فيديو الأذان: ${videoPath}`);
+          if (audioFailed) finishAthan();
+        };
+        athanVideo.onended = finishAthan;
+
+        athanAudio.onended = finishAthan;
+        athanAudio.onerror = () => {
+          if (thisRun !== athanRunId) return;
+          audioFailed = true;
+          console.warn("تعذر تحميل أو تشغيل ملف صوت الأذان audio/athan.MP3");
+          if (videoFailed) finishAthan();
+        };
+
+        athanAudio.currentTime = 0;
+        athanAudio.play().catch((error) => {
+          console.warn("تعذر بدء صوت الأذان:", error);
+          audioFailed = true;
+          if (videoFailed) finishAthan();
+        });
+
+        athanVideo.src = videoPath;
+        athanVideo.load();
+
+        // حماية أخيرة من بقاء النظام في حالة الأذان إذا لم يصل حدث ended لأي سبب.
+        athanFinishTimer = setTimeout(finishAthan, 40000);
+      }
+
+      function checkAthanOnline(now) {
+        const todayKey = getLocalDateKey(now);
+        if (
+          prayerTimesDate !== todayKey &&
+          !prayerFetchInProgress &&
+          Date.now() - lastPrayerFetchAttempt >= 60000
+        ) {
+          fetchPrayerTimes();
+        }
+
+        // لا نشغّل أوقاتًا قديمة إذا لم تصل بيانات اليوم الحالي بعد.
+        if (!prayerTimes || prayerTimesDate !== todayKey) return;
+
+        const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        for (const prayer in prayerTimes) {
+          if (
+            nowSeconds >= prayerTimes[prayer] &&
+            nowSeconds < prayerTimes[prayer] + 5 &&
+            athanPlayedKey !== `${prayer}-${todayKey}` &&
+            !athanActive
+          ) {
+            athanPlayedKey = `${prayer}-${todayKey}`;
+            playAthan(prayer);
+            break;
+          }
+        }
+      }
+
+      /* ========================================================
+         MAIN LOOP
+         ======================================================== */
+      function mainLoop() {
+        const now = new Date();
+        updateClock(now);
+
+        const todayKey = getLocalDateKey(now);
+        if (todayKey !== lastRenderedDateKey) {
+          updateDate(now);
+          lastRenderedDateKey = todayKey;
+        }
+
+        checkStatusBoxes(now);
+        checkAlerts(now);
+        checkAthanOnline(now);
+        controlNightMode(now);
+
+        if (!athanActive && bgVideo.style.display !== "block") {
+          sliderCounter++;
+          if (sliderCounter >= 5) {
+            nextSlide();
+            sliderCounter = 0;
+          }
+        }
+      }
+
+      const startupNow = new Date();
+      updateDate(startupNow);
+      lastRenderedDateKey = getLocalDateKey(startupNow);
+      updateClock(startupNow);
+      setInterval(mainLoop, 1000);
+      fetchPrayerTimes();
+
+      /* ========================================================
+         LOADING SCREEN LOGIC
+         ======================================================== */
+      function startPreloading() {
+        const loading = document.getElementById("loadingScreen");
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const filesToLoad = [];
+        const failures = [];
+        let completed = 0;
+        let finished = false;
+
+        for (let i = 1; i <= 5; i++) {
+          filesToLoad.push({ src: `preimg/Slide${i}.JPG`, type: "image" });
+        }
+        for (let i = 1; i <= 5; i++) {
+          filesToLoad.push({ src: `video/P${i}.mp4`, type: "video" });
+        }
+        for (let i = 0; i <= 13; i++) {
+          const key = i < 10 ? `0${i}` : String(i);
+          filesToLoad.push({ src: `audio/${key}.MP3`, type: "audio", element: audioFiles[key] });
+        }
+        athanAudio.preload = "auto";
+        filesToLoad.push({ src: "audio/athan.MP3", type: "audio", element: athanAudio });
+
+        const totalFiles = filesToLoad.length;
+        progressText.textContent = `٠٪ — ٠ من ${toArabicNumber(totalFiles)} ملف`;
+
+        function finishLoading() {
+          if (finished) return;
+          finished = true;
+          progressBar.style.width = "100%";
+          if (failures.length) {
+            progressBar.style.background = "#f9a825";
+            progressText.textContent = `اكتمل الفحص؛ تعذّر تجهيز ${toArabicNumber(failures.length)} ملفات`;
+            console.warn("ملفات لم تجهز أثناء التحميل المسبق:", failures);
+          } else {
+            progressText.textContent = "اكتمل تجهيز الملفات بنجاح";
+          }
+          setTimeout(() => {
+            loading.style.opacity = "0";
+            setTimeout(() => { loading.style.display = "none"; }, 850);
+          }, failures.length ? 1400 : 500);
+        }
+
+        function settleAsset(asset, succeeded, reason = "") {
+          if (asset.settled) return;
+          asset.settled = true;
+          clearTimeout(asset.timeoutId);
+          completed++;
+          if (!succeeded) failures.push(`${asset.src}${reason ? ` (${reason})` : ""}`);
+          const percent = Math.floor((completed / totalFiles) * 100);
+          progressBar.style.width = `${percent}%`;
+          progressText.textContent = `${toArabicNumber(percent)}٪ — ${toArabicNumber(completed)} من ${toArabicNumber(totalFiles)} ملف`;
+          if (completed >= totalFiles) finishLoading();
+        }
+
+        filesToLoad.forEach((entry) => {
+          const asset = { ...entry, settled: false, timeoutId: null };
+          asset.timeoutId = setTimeout(() => settleAsset(asset, false, "انتهت مهلة التجهيز"), 18000);
+
+          if (entry.type === "image") {
+            const image = new Image();
+            image.onload = () => settleAsset(asset, true);
+            image.onerror = () => settleAsset(asset, false, "خطأ صورة");
+            image.src = entry.src;
+            if (image.complete) {
+              if (image.naturalWidth > 0) settleAsset(asset, true);
+              else settleAsset(asset, false, "صورة غير صالحة");
+            }
+          } else if (entry.type === "video") {
+            const video = document.createElement("video");
+            video.preload = "auto";
+            video.muted = true;
+            video.playsInline = true;
+            video.addEventListener("loadeddata", () => settleAsset(asset, true), { once: true });
+            video.addEventListener("error", () => settleAsset(asset, false, "خطأ فيديو"), { once: true });
+            video.src = entry.src;
+            video.load();
+          } else {
+            // استخدام عناصر الصوت الفعلية للنظام يمنع إنشاء نسخ تحميل إضافية لكل ملف.
+            const audio = entry.element || new Audio();
+            audio.preload = "auto";
+            if (audio.readyState >= 4) {
+              settleAsset(asset, true);
+              return;
+            }
+            audio.addEventListener("canplaythrough", () => settleAsset(asset, true), { once: true });
+            audio.addEventListener("error", () => settleAsset(asset, false, "خطأ صوت"), { once: true });
+            if (audio.src !== new URL(entry.src, document.baseURI).href) audio.src = entry.src;
+            audio.load();
+          }
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", startPreloading, { once: true });
+      } else {
+        startPreloading();
+      }
+
+    </script>
+  </body>
+</html>
