@@ -573,9 +573,10 @@
         transform-origin: right center;
         animation: timerShrink linear forwards;
       }
-      @keyframes timerShrink {
-        to { transform: scaleX(0); }
-      }
+@keyframes timerShrink {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
 
       /* ========================================================
          ATHAN
