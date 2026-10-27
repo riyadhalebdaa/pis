@@ -68,6 +68,11 @@
         width: 100%;
         height: 100%;
       }
+      /* حماية إضافية: لا يمكن للصفحة أن تتحرك أفقياً أو عمودياً بأي حال */
+      html {
+        overflow: hidden;
+        overflow: clip;
+      }
 
       body {
         font-family: var(--font);
@@ -201,6 +206,8 @@
 
       .slider {
         position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         z-index: 1000;
@@ -209,6 +216,8 @@
       }
       .slide {
         position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -253,6 +262,10 @@
           0 1.4rem 3.2rem rgba(30, 0, 10, 0.38),
           inset 0 0 2rem rgba(93, 4, 19, 0.12);
         z-index: 5000;
+        /* إصلاح الإزاحة: صناديق علامات الساعة (.tick) مربعة ومُدوَّرة، وزواياها تخرج عن دائرة الساعة
+           بمقدار 0.8rem خارج الشاشة من جهة اليسار، فتتسع الصفحة أفقياً ويحدث الانزياح.
+           القص هنا يمنع هذا الخروج دون أن يغيّر شكل الساعة (الظل خارجي ولا يتأثر). */
+        overflow: hidden;
       }
       .center {
         position: absolute;
