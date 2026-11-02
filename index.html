@@ -682,6 +682,7 @@
     <video id="athanVideo" playsinline></video>
     <audio id="athanAudio" src="audio/athan.MP3"></audio>
 
+    <script src="slides.js"></script>
     <script>
       /* ========================================================
          CONFIGURATION
@@ -736,8 +737,24 @@
       /* ========================================================
          SLIDER SETUP
          ======================================================== */
-      const totalImages = 325;
-      let currentIndex = 1;
+      const SLIDES_REFRESH_MS = 6 * 60 * 60 * 1000; // إعادة قراءة slides.js كل 30 دقيقة
+      const SLIDES_FALLBACK_COUNT = 325;        // يُستخدم فقط إذا تعذّر تحميل slides.js
+
+      function readSlideList() {
+        if (Array.isArray(window.SLIDES)) {
+          return window.SLIDES.filter((n) => typeof n === "string" && n.trim() !== "");
+        }
+        return [];
+      }
+
+      let slideList = readSlideList();
+      if (slideList.length === 0) {
+        console.warn("slides.js غير موجود أو فارغ؛ سيتم استخدام الترقيم القديم Slide1..Slide" + SLIDES_FALLBACK_COUNT);
+        slideList = Array.from({ length: SLIDES_FALLBACK_COUNT }, (_, i) => `Slide${i + 1}.JPG`);
+      }
+
+      let currentIndex = 0;
+      let skipAttempts = 0;
       let img1 = document.createElement("img");
       let img2 = document.createElement("img");
 
@@ -746,8 +763,11 @@
       slider.appendChild(img1);
       slider.appendChild(img2);
 
+      function pathFor(name) {
+        return `preimg/${encodeURIComponent(name)}`;
+      }
       function getImagePath(index) {
-        return `preimg/Slide${index}.JPG`;
+        return pathFor(slideList[index]);
       }
       img1.src = getImagePath(currentIndex);
 
@@ -755,9 +775,9 @@
 
       function nextSlide() {
         if (slideInProgress || athanActive || bgVideo.style.display === "block") return;
+        if (slideList.length < 2) return;
 
-        let nextIndex = currentIndex + 1;
-        if (nextIndex > totalImages) nextIndex = 1;
+        const nextName = slideList[(currentIndex + 1) % slideList.length];
 
         const targetImage = img2;
         slideInProgress = true;
@@ -767,18 +787,41 @@
           targetImage.classList.add("active");
           img1.classList.remove("active");
           [img1, img2] = [img2, img1];
-          currentIndex = nextIndex;
+          const idx = slideList.indexOf(nextName);
+          currentIndex = idx >= 0 ? idx : 0;
+          skipAttempts = 0;
           slideInProgress = false;
         };
         targetImage.onerror = () => {
           targetImage.onload = null;
           targetImage.onerror = null;
-          currentIndex = nextIndex; // تجاوز الصورة المتعذرة بدل التوقف عندها
+          console.warn(`تعذر تحميل الشريحة: ${pathFor(nextName)}`);
+          const idx = slideList.indexOf(nextName);
+          currentIndex = idx >= 0 ? idx : 0; // تجاوز الصورة المتعذرة فوراً
           slideInProgress = false;
-          console.warn(`تعذر تحميل الشريحة: ${getImagePath(nextIndex)}`);
+          if (++skipAttempts < slideList.length) nextSlide();
+          else skipAttempts = 0; // كل الصور تعذّرت؛ نتوقف حتى الدورة التالية
         };
-        targetImage.src = getImagePath(nextIndex);
+        targetImage.src = pathFor(nextName);
       }
+
+      /* إعادة قراءة قائمة الشرائح دورياً دون إعادة تحميل الصفحة */
+      function refreshSlideList() {
+        const s = document.createElement("script");
+        s.src = "slides.js?t=" + Date.now();
+        s.onload = () => {
+          const fresh = readSlideList();
+          s.remove();
+          if (fresh.length === 0) return; // تجاهل النتيجة الفارغة أو غير الصالحة
+          const currentName = slideList[currentIndex];
+          slideList = fresh;
+          const idx = slideList.indexOf(currentName);
+          currentIndex = idx >= 0 ? idx : 0;
+        };
+        s.onerror = () => s.remove();
+        document.head.appendChild(s);
+      }
+      setInterval(refreshSlideList, SLIDES_REFRESH_MS);
 
       img1.onerror = () => {
         img1.onerror = null;
@@ -1421,9 +1464,9 @@
         let completed = 0;
         let finished = false;
 
-        for (let i = 1; i <= 5; i++) {
-          filesToLoad.push({ src: `preimg/Slide${i}.JPG`, type: "image" });
-        }
+        slideList.slice(0, 5).forEach((name) => {
+          filesToLoad.push({ src: pathFor(name), type: "image" });
+        });
         for (let i = 1; i <= 5; i++) {
           filesToLoad.push({ src: `video/P${i}.mp4`, type: "video" });
         }
