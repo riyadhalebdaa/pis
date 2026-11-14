@@ -518,6 +518,110 @@
       }
 
       /* ========================================================
+         ATHAN REMINDER — تذكير هادئ قبل الأذان بخمس دقائق
+         ======================================================== */
+      .athan-reminder {
+        position: absolute;
+        top: var(--edge);
+        left: 50%;
+        display: flex;
+        align-items: center;
+        gap: 1.3rem;
+        width: 30rem;
+        padding: 1.1rem 1.6rem 1.1rem 1.4rem;
+        border-radius: var(--radius-xl);
+        direction: rtl;
+        z-index: 5000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-50%, -1.6rem);
+        transition:
+          opacity 0.8s ease,
+          transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+          visibility 0s linear 0.8s;
+      }
+      .athan-reminder.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0);
+        transition:
+          opacity 0.8s ease,
+          transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+          visibility 0s linear 0s;
+      }
+      .reminder-ring {
+        position: relative;
+        flex: none;
+        width: 7.4rem;
+        height: 7.4rem;
+      }
+      .reminder-ring svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+        display: block;
+      }
+      .reminder-ring circle {
+        fill: none;
+        stroke-width: 7;
+        stroke-linecap: round;
+      }
+      .ring-bg {
+        stroke: rgba(26, 11, 14, 0.12);
+      }
+      .ring-fg {
+        stroke: var(--gold);
+        transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+      }
+      .athan-reminder.urgent .ring-fg {
+        stroke: var(--coral);
+      }
+      .athan-reminder.urgent .reminder-time {
+        color: var(--coral);
+      }
+      .reminder-time {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: var(--maroon);
+        font-variant-numeric: tabular-nums;
+        transition: color 0.6s ease;
+      }
+      .reminder-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        min-width: 0;
+      }
+      .reminder-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 1.4rem;
+        font-weight: 700;
+        line-height: 1.3;
+        white-space: nowrap;
+        color: var(--maroon);
+      }
+      .reminder-title svg {
+        flex: none;
+        width: 1.5rem;
+        height: 1.5rem;
+        fill: var(--gold);
+      }
+      .reminder-verse {
+        font-size: 1.02rem;
+        font-weight: 500;
+        line-height: 1.7;
+        color: var(--ink-soft);
+      }
+
+      /* ========================================================
          OVERLAY ALERT
          ======================================================== */
       .overlay {
@@ -637,6 +741,20 @@
         .date-box {
           min-width: 16rem;
         }
+        .athan-reminder {
+          width: 25rem;
+          gap: 0.9rem;
+        }
+        .reminder-ring {
+          width: 6.4rem;
+          height: 6.4rem;
+        }
+        .reminder-time {
+          font-size: 1.6rem;
+        }
+        .reminder-title {
+          font-size: 1.15rem;
+        }
       }
     </style>
   </head>
@@ -674,6 +792,25 @@
 
     <div class="date-box glass ui-item" id="dateBox" style="--i: 2">
       <div class="date-text" id="dateText"></div>
+    </div>
+
+    <div class="athan-reminder glass" id="athanReminder" aria-live="polite">
+      <div class="reminder-ring">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+          <circle class="ring-fg" id="reminderRing" cx="50" cy="50" r="45"></circle>
+        </svg>
+        <span class="reminder-time" id="reminderTime">٠٥:٠٠</span>
+      </div>
+      <div class="reminder-body">
+        <div class="reminder-title">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.4 14.6A8.6 8.6 0 0 1 9.4 3.6a.5.5 0 0 0-.7-.6A9.8 9.8 0 1 0 21 15.3a.5.5 0 0 0-.6-.7z" />
+          </svg>
+          <span id="reminderTitle">اقترب موعد الأذان</span>
+        </div>
+        <div class="reminder-verse">﴿ إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا ﴾</div>
+      </div>
     </div>
 
     <div class="overlay" id="overlay"></div>
@@ -978,6 +1115,18 @@
         Maghrib: "video/P4.mp4",
         Isha: "video/P5.mp4",
       };
+
+      /* تذكير ما قبل الأذان */
+      const REMINDER_WINDOW_SEC = 300; // يظهر قبل الأذان بـ 5 دقائق
+      const REMINDER_URGENT_SEC = 60;  // يتحول لون الحلقة في الدقيقة الأخيرة
+      const PRAYER_AR = { Fajr: "الفجر", Dhuhr: "الظهر", Asr: "العصر", Maghrib: "المغرب", Isha: "العشاء" };
+      const reminderEl = document.getElementById("athanReminder");
+      const reminderRing = document.getElementById("reminderRing");
+      const reminderTime = document.getElementById("reminderTime");
+      const reminderTitle = document.getElementById("reminderTitle");
+      const RING_LENGTH = 2 * Math.PI * 45;
+      reminderRing.style.strokeDasharray = RING_LENGTH;
+      reminderRing.style.strokeDashoffset = 0;
 
       /* ========================================================
          CORE FUNCTIONS
@@ -1412,6 +1561,41 @@
         }
       }
 
+      /* يُحسب الوقت المتبقي من الساعة مباشرة في كل ثانية، فلا يتأثر بتأخر المؤقتات */
+      function updateAthanReminder(now) {
+        let target = null;
+        let remaining = 0;
+
+        if (!athanActive && prayerTimes && prayerTimesDate === getLocalDateKey(now)) {
+          const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+          for (const prayer in prayerTimes) {
+            const left = prayerTimes[prayer] - nowSeconds;
+            if (left > 0 && left <= REMINDER_WINDOW_SEC) {
+              target = prayer;
+              remaining = left;
+              break;
+            }
+          }
+        }
+
+        if (!target) {
+          reminderEl.classList.remove("show", "urgent");
+          return;
+        }
+
+        const name = target === "Dhuhr" && now.getDay() === 5 ? "الجمعة" : PRAYER_AR[target];
+        const title = `اقترب موعد أذان ${name}`;
+        if (reminderTitle.textContent !== title) reminderTitle.textContent = title;
+
+        const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const ss = String(remaining % 60).padStart(2, "0");
+        reminderTime.textContent = toArabicDigits(`${mm}:${ss}`);
+        reminderRing.style.strokeDashoffset = RING_LENGTH * (1 - remaining / REMINDER_WINDOW_SEC);
+
+        reminderEl.classList.toggle("urgent", remaining <= REMINDER_URGENT_SEC);
+        reminderEl.classList.add("show");
+      }
+
       /* ========================================================
          MAIN LOOP
          ======================================================== */
@@ -1428,6 +1612,7 @@
         checkStatusBoxes(now);
         checkAlerts(now);
         checkAthanOnline(now);
+        updateAthanReminder(now);
         controlNightMode(now);
 
         if (!athanActive && bgVideo.style.display !== "block") {
